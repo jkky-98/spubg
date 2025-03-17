@@ -3,6 +3,7 @@ package com.jkky98.spubg.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,6 +33,10 @@ public class Match {
     private String assetId;
 
     private String assetUrl;
+
+    private LocalDateTime createdAt;
+
+    private String season;
 
     @OneToMany(mappedBy = "match")
     @Builder.Default

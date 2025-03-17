@@ -73,22 +73,23 @@ public class MemberService {
             List<Match> matchesSaved
     ) {
         // 저장된 Member와 Match를 매핑하여 빠르게 조회할 수 있도록 Map 생성
-        Map<Long, Member> savedMemberMap = membersSaved.stream()
-                .collect(Collectors.toMap(Member::getId, member -> member));
+        Map<String, Member> savedMemberMap = membersSaved.stream()
+                .collect(Collectors.toMap(Member::getUsername, member -> member));
 
-        Map<Long, Match> savedMatchMap = matchesSaved.stream()
-                .collect(Collectors.toMap(Match::getId, match -> match));
+        Map<String, Match> savedMatchMap = matchesSaved.stream()
+                .collect(Collectors.toMap(Match::getMatchApiId, match -> match));
 
         // 기존 initMatchAnalysisMap을 순회하면서, 저장된 Member 및 Match로 MemberMatch 생성
         initMatchAnalysisMap.forEach((member, matches) -> {
-            Member savedMember = savedMemberMap.get(member.getId()); // 저장된 Member 가져오기
+            Member savedMember = savedMemberMap.get(member.getUsername()); // 저장된 Member 가져오기
 
             for (Match match : matches) {
-                Match savedMatch = savedMatchMap.get(match.getId());
+                Match savedMatch = savedMatchMap.get(match.getMatchApiId());
 
                 MemberMatch mm = MemberMatch.builder()
                         .member(savedMember)
                         .match(savedMatch)
+                        .boolIsAnalysis(false)
                         .build();
 
                 memberMatchList.add(mm);

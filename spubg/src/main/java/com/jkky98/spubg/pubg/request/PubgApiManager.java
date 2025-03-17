@@ -1,13 +1,21 @@
 package com.jkky98.spubg.pubg.request;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.jkky98.spubg.pubg.util.TokenBucket;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
 
 @Service
@@ -17,6 +25,7 @@ public class  PubgApiManager {
     private final WebClient webClient;
     private final PubgUtil pubgUtil;
     private final TokenBucket tokenBucket;
+    private final ObjectMapper objectMapper = new ObjectMapper(new JsonFactory());
 
     private void consumeToken() {
         synchronized (tokenBucket) {
@@ -96,4 +105,51 @@ public class  PubgApiManager {
 
         return sendRequest("/players?filter[playerNames]=" + sb);
     }
+
+    /**
+     * telemtry 데이터 가져오기
+     */
+    public JsonNode requestTelemetry(String telemetryUrl) {
+        log.info("📡 Fetching telemetry data from: {}", telemetryUrl);
+
+        try {
+            String jsonResponse = webClient.get()
+                    .uri(telemetryUrl)
+                    .retrieve()
+                    .bodyToMono(String.class) // 🔥 String으로 직접 변환
+                    .doOnNext(response -> log.info("✅ Response received (size={} bytes)", response.length()))
+                    .doOnError(error -> log.error("❌ Error fetching telemetry data: ", error))
+                    .block();
+
+            if (jsonResponse == null || jsonResponse.isEmpty()) {
+                throw new RuntimeException("❌ Empty response from telemetry API");
+            }
+
+            JsonNode rootNode = objectMapper.readTree(jsonResponse); // JSON 변환
+            log.info("✅ Successfully parsed telemetry JSON");
+
+            // 필요한 이벤트만 필터링하여 JsonNode에 담아 반환
+            ArrayNode filteredEvents = objectMapper.createArrayNode();
+            rootNode.forEach(node -> {
+                if (node.has("_T")) {
+                    String eventType = node.get("_T").asText();
+                    if ("LogPlayerAttack".equals(eventType) || "LogPlayerTakeDamage".equals(eventType)) {
+                        filteredEvents.add(node);
+                    }
+                }
+            });
+
+            log.info("📊 Extracted {} relevant events", filteredEvents.size());
+            return filteredEvents; // 최종적으로 필터링된 JsonNode 반환
+
+        } catch (WebClientResponseException e) {
+            log.error("❌ WebClientResponseException: {}", e.getMessage(), e);
+        } catch (IOException e) {
+            log.error("❌ JSON parsing error: {}", e.getMessage(), e);
+        } catch (Exception e) {
+            log.error("❌ General Exception occurred: {}", e.getMessage(), e);
+        }
+        return objectMapper.createArrayNode(); // 예외 발생 시 빈 배열 반환
+    }
+
 }

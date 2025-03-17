@@ -12,6 +12,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 @Service
@@ -113,8 +116,10 @@ public class MatchService {
         log.info("✅ 분석 여부 설정: boolIsAnalysis = {}", matchUpdated.isBoolIsAnalysis());
 
         String mapName = rootNode.get("data").get("attributes").get("mapName").asText();
+        LocalDateTime createdAt = parseCreatedAt(rootNode);
         String displayMapName = GameMap.getDisplayName(mapName);
         matchUpdated.setMap(displayMapName);
+        matchUpdated.setCreatedAt(createdAt);
         log.info("✅ 맵 정보 업데이트: mapName = {} -> displayName = {}", mapName, displayMapName);
 
         matchUpdated.setGameMode(GameMode.SQUAD);
@@ -139,5 +144,13 @@ public class MatchService {
         }
 
         log.info("✅ 업데이트 완료: Match ID = {}", matchUpdated.getMatchApiId());
+    }
+
+    private static LocalDateTime parseCreatedAt(JsonNode rootNode) {
+        String createdAtString = rootNode.get("data").get("attributes").get("createdAt").asText();
+
+        return Instant.parse(createdAtString)
+                .atZone(ZoneId.of("Asia/Seoul"))
+                .toLocalDateTime();
     }
 }
