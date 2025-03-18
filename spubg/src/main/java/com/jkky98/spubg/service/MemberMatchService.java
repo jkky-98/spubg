@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -65,6 +66,7 @@ public class MemberMatchService {
         List<MatchWeaponDetail> matchWeaponDetails = new ArrayList<>();
 
         weaponHistoryMap.forEach((attackId, weaponHistory) -> {
+
             MatchWeaponDetail mwDetail = MatchWeaponDetail.builder()
                     .attackId(attackId)
                     .damageWhere(weaponHistory.damageWhere)
@@ -72,7 +74,11 @@ public class MemberMatchService {
                     .weaponName(weaponHistory.weaponName)
                     .damage(weaponHistory.damage)
                     .createdAt(weaponHistory.createdAt)
+                    .attackerHealth(weaponHistory.attackerHealth)
+                    .attackerIsInVehicle(weaponHistory.attackerIsinVehicle)
+                    .phase(weaponHistory.phase)
                     .memberMatch(memberMatch)
+                    .damDistnace(weaponHistory.damDistance)
                     .build();
 
             matchWeaponDetails.add(mwDetail);
@@ -158,22 +164,41 @@ public class MemberMatchService {
             LocalDateTime createdAt = Instant.parse(attackNode.get("_D").asText())
                     .atZone(ZoneId.of("Asia/Seoul"))
                     .toLocalDateTime();
+            BigDecimal attackerHealth = BigDecimal.valueOf(attackNode.get("attacker").get("health").asDouble());
+            boolean attackerIsInVehicle = attackNode.get("attacker").get("isInVehicle").asBoolean();
+            BigDecimal phase = BigDecimal.valueOf(attackNode.get("common").get("isGame").asDouble());
+            BigDecimal attX = BigDecimal.valueOf(attackNode.get("attacker").get("location").get("x").asDouble());
+            BigDecimal attY = BigDecimal.valueOf(attackNode.get("attacker").get("location").get("y").asDouble());
+            BigDecimal attZ = BigDecimal.valueOf(attackNode.get("attacker").get("location").get("z").asDouble());
 
-            weaponHistoryMap.put(attackId, new WeaponHistory(WeaponName.fromKey(itemId), createdAt));
+            WeaponHistory weaponHistory = new WeaponHistory(WeaponName.fromKey(itemId), createdAt, attackerHealth, attackerIsInVehicle, phase, attX, attY, attZ);
+
+            weaponHistoryMap.put(attackId, weaponHistory);
         }
 
         for (JsonNode damageNode : damageNodes) {
             try {
                 String attackId = damageNode.get("attackId").asText();
                 WeaponHistory weaponHistory = weaponHistoryMap.get(attackId);
-                // 데미지 기록 설정
-                weaponHistory.setDamage(BigDecimal.valueOf(damageNode.get("damage").asDouble()));
-                // 무기 이름 설정
-                weaponHistory.setWeaponName(WeaponName.fromKey(damageNode.get("damageCauserName").asText()));
-                // 맞은 위치 설정
-                weaponHistory.setDamageWhere(DamageWhere.fromkey(damageNode.get("damageReason").asText()));
-                // 무기 카테고리 설정
-                weaponHistory.setWeaponType(WeaponType.getWeaponType(weaponHistory.getWeaponName()));
+
+                if (weaponHistory != null) {
+                    // 데미지 기록 설정
+                    weaponHistory.setDamage(BigDecimal.valueOf(damageNode.get("damage").asDouble()));
+                    // 무기 이름 설정
+                    weaponHistory.setWeaponName(WeaponName.fromKey(damageNode.get("damageCauserName").asText()));
+                    // 맞은 부위 설정
+                    weaponHistory.setDamageWhere(DamageWhere.fromkey(damageNode.get("damageReason").asText()));
+                    // 무기 카테고리 설정
+                    weaponHistory.setWeaponType(WeaponType.getWeaponType(weaponHistory.getWeaponName()));
+                    // 맞은 x,y,z 위치
+                    BigDecimal damX = BigDecimal.valueOf(damageNode.get("victim").get("location").get("x").asDouble());
+                    BigDecimal damY = BigDecimal.valueOf(damageNode.get("victim").get("location").get("y").asDouble());
+                    BigDecimal damZ = BigDecimal.valueOf(damageNode.get("victim").get("location").get("z").asDouble());
+
+                    BigDecimal distance = calculateDistance(weaponHistory.attX, weaponHistory.attY, weaponHistory.attZ, damX, damY, damZ);
+                    weaponHistory.setDamDistance(distance);
+                }
+
             } catch (Exception e) {
                 log.error(e.getMessage(), e);
             }
@@ -191,9 +216,57 @@ public class MemberMatchService {
         private DamageWhere damageWhere;
         private LocalDateTime createdAt;
 
-        public WeaponHistory(WeaponName weaponName, LocalDateTime createdAt) {
+        // 3.18 추가 필드
+        private BigDecimal attackerHealth;
+
+        private boolean attackerIsinVehicle;
+
+        // isGame
+        private BigDecimal phase;
+
+        private BigDecimal attX;
+
+        private BigDecimal attY;
+
+        private BigDecimal attZ;
+
+        private BigDecimal damDistance;
+
+        public WeaponHistory(WeaponName weaponName,
+                             LocalDateTime createdAt,
+                             BigDecimal attackerHealth,
+                             boolean attackerIsinVehicle,
+                             BigDecimal phase,
+                             BigDecimal attX,
+                             BigDecimal attY,
+                             BigDecimal attZ) {
             this.weaponName = weaponName;
             this.createdAt = createdAt;
+            this.attackerHealth = attackerHealth;
+            this.attackerIsinVehicle = attackerIsinVehicle;
+            this.phase = phase;
+            this.attX = attX;
+            this.attY = attY;
+            this.attZ = attZ;
         }
+    }
+
+    public static BigDecimal calculateDistance(BigDecimal x1, BigDecimal y1, BigDecimal z1,
+                                               BigDecimal x2, BigDecimal y2, BigDecimal z2) {
+        // (x2 - x1)^2
+        BigDecimal deltaX = x2.subtract(x1).pow(2);
+        // (y2 - y1)^2
+        BigDecimal deltaY = y2.subtract(y1).pow(2);
+        // (z2 - z1)^2
+        BigDecimal deltaZ = z2.subtract(z1).pow(2);
+
+        // sqrt((x2 - x1)^2 + (y2 - y1)^2 + (z2 - z1)^2)
+        BigDecimal sum = deltaX.add(deltaY).add(deltaZ);
+
+        // Math.sqrt()를 사용하여 BigDecimal 값의 제곱근을 구함
+        BigDecimal distance = BigDecimal.valueOf(Math.sqrt(sum.doubleValue()));
+
+        // 소수점 2자리까지 반올림하여 반환
+        return distance.setScale(2, RoundingMode.HALF_UP);
     }
 }

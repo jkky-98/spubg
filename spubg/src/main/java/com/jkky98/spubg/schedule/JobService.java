@@ -1,9 +1,14 @@
-package com.jkky98.spubg.service;
+package com.jkky98.spubg.schedule;
 
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.MemberMatch;
 import com.jkky98.spubg.repository.MatchRepository;
+import com.jkky98.spubg.service.MatchProcessingQueue;
+import com.jkky98.spubg.service.MatchWeaponDetailProcessingQueue;
+import com.jkky98.spubg.service.MemberMatchService;
+import com.jkky98.spubg.service.MemberService;
 import lombok.RequiredArgsConstructor;
+import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -17,9 +22,11 @@ public class JobService {
     private final MemberMatchService memberMatchService;
     private final MatchProcessingQueue matchProcessingQueue;
     private final MatchWeaponDetailProcessingQueue matchWeaponDetailProcessingQueue;
+    private final MemberService memberService;
 
+    @Synchronized
     @Scheduled(fixedRate = 60000) // 1분마다 실행
-    public synchronized void fetchAndProcessMatches() {
+    public void fetchAndProcessMatches() {
         // ✅ 기존 작업이 남아있으면 실행하지 않음
         if (!matchProcessingQueue.isQueueEmpty()) {
             log.info("Queue is not empty. Skipping this execution. : matchProcessingQueue");
@@ -40,8 +47,9 @@ public class JobService {
         matchProcessingQueue.startProcessing(); // ✅ 작업 시작
     }
 
+    @Synchronized
     @Scheduled(fixedRate = 60000)
-    public synchronized void fetchAndProcessMatchWeaponDetail() {
+    public void fetchAndProcessMatchWeaponDetail() {
         // ✅ 기존 작업이 남아있으면 실행하지 않음
         if (!matchWeaponDetailProcessingQueue.isQueueEmpty()) {
             log.info("[fetchAndProcessMatchWeaponDetail] Queue is not empty. Skipping this execution. : matchWeaponDetailProcessingQueue");
@@ -60,6 +68,12 @@ public class JobService {
 
         log.info("[fetchAndProcessMatchWeaponDetail] StartProcessing : " + memberMatchNeedToAnaysis.size());
         matchWeaponDetailProcessingQueue.startProcessing(); // 작업 시작
+    }
+
+    @Synchronized
+    @Scheduled(fixedRate = 60000)
+    public void fetchAndProcessMember() {
+        memberService.fetchMember();
     }
 }
 

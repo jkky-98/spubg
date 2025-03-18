@@ -7,6 +7,7 @@ import com.jkky98.spubg.domain.Member;
 import com.jkky98.spubg.domain.MemberMatch;
 import com.jkky98.spubg.domain.init.InitMemberList;
 import com.jkky98.spubg.pubg.request.PubgApiManager;
+import com.jkky98.spubg.repository.MatchRepository;
 import com.jkky98.spubg.repository.MemberMatchRepository;
 import com.jkky98.spubg.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -14,138 +15,124 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
+
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class MemberService {
 
-    private final PubgApiManager pubgApiManager;
     private final MemberRepository memberRepository;
+    private final MatchRepository matchRepository;
+    private final PubgApiManager pubgApiManager;
     private final MemberMatchRepository memberMatchRepository;
-    private final MatchService matchService;
 
     @Transactional
-    public void initMember() {
-        List<String> initMembers = InitMemberList.list;
+    public void fetchMember() {
 
-        JsonNode jsonNode = pubgApiManager.requestManyMember(initMembers);
+        log.info("🔍 fetchMember() 시작");
 
-        List<Member> initMembersSaved = new ArrayList<>();
-        Map<Member, List<Match>> initMatchAnalysisMap = new HashMap<>();
-        List<MemberMatch> memberMatchList = new ArrayList<>();
-
-        JsonNode dataNode = jsonNode.get("data");
-
-        setMembersAndMatches(initMembers, dataNode, initMembersSaved, initMatchAnalysisMap);
-
-        List<Member> membersSaved = memberRepository.saveAll(initMembersSaved);
-
-        List<Match> uniqueMatches = initMatchAnalysisMap.values().stream()
-                .flatMap(List::stream)  // `List<Match>` → 개별 `Match`로 변환
-                .collect(Collectors.toMap(
-                        Match::getMatchApiId,
-                        match -> match,
-                        (existing, replacement) -> existing // 중복된 경우 기존 값 유지
-                ))
-                .values()
-                .stream()
+        List<String> allUsernames = memberRepository.findAll().stream()
+                .map(Member::getUsername)
                 .toList();
+        log.info("👥 총 {}명의 멤버 데이터 조회 완료", allUsernames.size());
 
-        System.out.println("SIZE: " + uniqueMatches.size());
+        JsonNode rootNode = pubgApiManager.requestManyMember(allUsernames);
+        JsonNode dataNode = rootNode.get("data");
 
-        List<Match> matchesSaved = matchService.saveAll(uniqueMatches);
+        if (checkFetchable(dataNode)) {
+            log.info("✅✅✅ 모든 매치가 이미 존재함. fetchMember() 종료 ✅✅✅");
+            return;
+        }
 
-        ofMemberMatchs(initMatchAnalysisMap, memberMatchList, membersSaved, matchesSaved);
+        Map<Member, List<Match>> memberMatchMap = setMemberMatchMap(dataNode);//memberMatchMap에 데이터 쌓기
+        log.info("📦 memberMatchMap 데이터 생성 완료. 총 {}명의 멤버가 포함됨", memberMatchMap.size());
 
-        memberMatchRepository.saveAll(memberMatchList);
-    }
+        List<Match> uniqueBulkMatch = getUniqueBulkMatch(memberMatchMap); // 유니크 매치 배열 만들기
+        log.info("🔄 유니크한 매치 개수: {}", uniqueBulkMatch.size());
 
-    private static void ofMemberMatchs(
-            Map<Member, List<Match>> initMatchAnalysisMap,
-            List<MemberMatch> memberMatchList,
-            List<Member> membersSaved,
-            List<Match> matchesSaved
-    ) {
-        // 저장된 Member와 Match를 매핑하여 빠르게 조회할 수 있도록 Map 생성
-        Map<String, Member> savedMemberMap = membersSaved.stream()
-                .collect(Collectors.toMap(Member::getUsername, member -> member));
+        List<Match> matchesSaved = matchRepository.saveAll(uniqueBulkMatch); // 유니크 매치 배열 리포지토리 저장
+        log.info("💾 매치 데이터 저장 완료. 저장된 매치 개수: {}", matchesSaved.size());
 
-        Map<String, Match> savedMatchMap = matchesSaved.stream()
+        Map<String, Match> MatchMapSaved = matchesSaved.stream()
                 .collect(Collectors.toMap(Match::getMatchApiId, match -> match));
 
-        // 기존 initMatchAnalysisMap을 순회하면서, 저장된 Member 및 Match로 MemberMatch 생성
-        initMatchAnalysisMap.forEach((member, matches) -> {
-            Member savedMember = savedMemberMap.get(member.getUsername()); // 저장된 Member 가져오기
+        List<MemberMatch> bulkMemberMatch = new ArrayList<>();
 
-            for (Match match : matches) {
-                Match savedMatch = savedMatchMap.get(match.getMatchApiId());
+        log.info("🔄 MemberMatch 매핑 시작");
+        memberMatchMap.forEach((member, matches) -> {
+            matches.forEach(
+                    match -> {
+                        Match matchSaved = MatchMapSaved.get(match.getMatchApiId());
+                        MemberMatch mm = MemberMatch.builder()
+                                .member(member)
+                                .match(matchSaved)
+                                .boolIsAnalysis(false)
+                                .build();
 
-                MemberMatch mm = MemberMatch.builder()
-                        .member(savedMember)
-                        .match(savedMatch)
-                        .boolIsAnalysis(false)
-                        .build();
-
-                memberMatchList.add(mm);
-            }
+                        bulkMemberMatch.add(mm);
+                    }
+            );
         });
+        log.info("🔄 MemberMatch 매핑 완료. 총 {}개 매핑됨", bulkMemberMatch.size());
+
+        memberMatchRepository.saveAll(bulkMemberMatch);
+        log.info("💾 MemberMatch 저장 완료");
+        log.info("✅ fetchMember() 완료");
     }
 
+    private boolean checkFetchable(JsonNode dataNode) {
+        Set<String> matchIds = new HashSet<>();
 
-    /**
-     * 응답 JsonNode에서 Member 객체들 구성, Match 객체들 구성
-     * @param initMembers
-     * @param dataNode
-     * @param initMembersSaved
-     * @param initMatchAnalysisMap
-     */
-    private static void setMembersAndMatches(List<String> initMembers, JsonNode dataNode, List<Member> initMembersSaved, Map<Member, List<Match>> initMatchAnalysisMap) {
-        for (int i = 0; i < initMembers.size(); i++) {
-            JsonNode memberNode = dataNode.get(i);
+        dataNode.forEach(
+                playerNode -> {
+                    JsonNode matchesNode = playerNode.get("relationships").get("matches").get("data");
+                    matchesNode.forEach(
+                            matchNode -> {
+                                matchIds.add(matchNode.get("id").asText());
+                            }
+                    );
+                }
+        );
 
-            JsonNode memberAttributesNode = memberNode.get("attributes");
-
-            Member memberSaved = Member.builder()
-                    .accountId(memberNode.get("id").asText())
-                    .clanId(memberAttributesNode.get("clanId").asText())
-                    .banType(memberAttributesNode.get("banType").asText())
-                    .username(memberAttributesNode.get("name").asText())
-                    .build();
-
-            initMembersSaved.add(memberSaved);
-
-            JsonNode matchesNode = memberNode.get("relationships").get("matches").get("data");
-
-            System.out.println("매치노드 크기 : " + matchesNode.size());
-
-            setInitMatchAnalysisListSaved(matchesNode, initMatchAnalysisMap, memberSaved);
-        }
+        long count = matchRepository.countByMatchApiIdIn(new ArrayList<>(matchIds));
+        return count == matchIds.size();
     }
 
-    private static void setInitMatchAnalysisListSaved(JsonNode matchesNode, Map<Member, List<Match>> initMatchAnalysisMap, Member member) {
-        if (matchesNode.isArray()) {
-            for (JsonNode matchNode : matchesNode) {
-                String matchId = matchNode.get("id").asText();
-                System.out.println(member.getUsername() + ":: matchId : " + matchId);
+    private static List<Match> getUniqueBulkMatch(Map<Member, List<Match>> memberMatchMap) {
+        Set<Match> bulkMatch = new HashSet<>();
+        memberMatchMap.values().forEach(bulkMatch::addAll);
+        return new ArrayList<>(bulkMatch);
+    }
 
-                Match match = Match.builder()
-                        .matchApiId(matchId)
-                        .boolIsAnalysis(false)
-                        .gameMode(GameMode.NOTFOUND)
-                        .build();
-                if (!initMatchAnalysisMap.containsKey(member)) {
-                    initMatchAnalysisMap.put(member, new ArrayList<>());
-                    initMatchAnalysisMap.get(member).add(match);
-                } else {
-                    initMatchAnalysisMap.get(member).add(match);
+    private Map<Member, List<Match>> setMemberMatchMap(JsonNode dataNode) {
+        Map<Member, List<Match>> memberMatchMap = new HashMap<>();
+
+        for (JsonNode playerNode : dataNode) {
+            String accountId = playerNode.get("id").asText();
+            Member member = memberRepository.findByAccountId(accountId).orElseThrow();
+
+            for (JsonNode matchNode : playerNode.get("relationships").get("matches").get("data")) {
+                String matchApiId = matchNode.get("id").asText();
+                if (!matchRepository.existsByMatchApiId(matchApiId)) {
+                    Match match = Match.builder()
+                            .matchApiId(matchApiId)
+                            .boolIsAnalysis(false)
+                            .gameMode(GameMode.NOTFOUND)
+                            .build();
+
+                    if (!memberMatchMap.containsKey(member)) {
+                        memberMatchMap.put(member, new ArrayList<>());
+                        memberMatchMap.get(member).add(match);
+                    } else {
+                        memberMatchMap.get(member).add(match);
+                    }
                 }
             }
         }
+
+        return memberMatchMap;
     }
 }

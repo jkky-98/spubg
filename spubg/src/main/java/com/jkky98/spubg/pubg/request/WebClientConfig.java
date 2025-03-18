@@ -10,7 +10,7 @@ public class WebClientConfig {
     public WebClient webClient() {
         return WebClient
                 .builder()
-                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(30 * 1024 * 1024)) // 20MB 제한 증가
+                .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(50 * 1024 * 1024)) // 50MB 제한 증가
                 .build();
     }
 }

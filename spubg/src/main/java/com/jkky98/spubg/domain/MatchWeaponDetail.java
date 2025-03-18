@@ -33,6 +33,20 @@ public class MatchWeaponDetail {
     @Column(precision = 10, scale = 1)
     private BigDecimal damage;
 
+    // 3.18 추가 필드
+    @Column(precision = 10, scale = 2)
+    private BigDecimal attackerHealth;
+
+    private boolean attackerIsInVehicle;
+
+    // isGame
+    @Column(precision = 10, scale = 2)
+    private BigDecimal phase;
+
+    // 데미지 이벤트 발생시 거리 측정
+    @Column(precision = 10, scale = 2)
+    private BigDecimal damDistnace;
+
     private LocalDateTime createdAt;
 
     @ManyToOne(fetch = FetchType.LAZY)
