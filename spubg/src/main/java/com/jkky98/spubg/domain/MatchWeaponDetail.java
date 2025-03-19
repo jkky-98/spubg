@@ -45,7 +45,7 @@ public class MatchWeaponDetail {
 
     // 데미지 이벤트 발생시 거리 측정
     @Column(precision = 10, scale = 2)
-    private BigDecimal damDistnace;
+    private BigDecimal damDistance;
 
     private LocalDateTime createdAt;
 

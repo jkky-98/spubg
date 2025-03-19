@@ -1,5 +1,6 @@
 package com.jkky98.spubg.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.*;
 import com.jkky98.spubg.pubg.request.PubgApiManager;
@@ -32,7 +33,7 @@ public class MemberMatchService {
     private final PubgApiManager pubgApiManager;
 
     @Transactional
-    public void saveMatchWeaponDetail(MemberMatch memberMatch) {
+    public void saveMatchWeaponDetail(MemberMatch memberMatch) throws JsonProcessingException {
         log.info("📌 [START] Processing match weapon details for MemberMatch ID: {}", memberMatch.getId());
 
         MemberMatch memberMatchFind = memberMatchRepository.findById(memberMatch.getId()).orElseThrow();
@@ -78,7 +79,7 @@ public class MemberMatchService {
                     .attackerIsInVehicle(weaponHistory.attackerIsinVehicle)
                     .phase(weaponHistory.phase)
                     .memberMatch(memberMatch)
-                    .damDistnace(weaponHistory.damDistance)
+                    .damDistance(weaponHistory.damDistance)
                     .build();
 
             matchWeaponDetails.add(mwDetail);

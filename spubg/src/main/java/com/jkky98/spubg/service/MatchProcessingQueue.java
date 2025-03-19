@@ -49,6 +49,9 @@ public class MatchProcessingQueue {
             }
         }
     }
+    public synchronized int getQueueSize() {
+        return queue.size();
+    }
 
     public void shutdown() {
         executorService.shutdown();

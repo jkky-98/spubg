@@ -2,6 +2,7 @@ package com.jkky98.spubg.pubg.request;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -29,16 +30,30 @@ public class  PubgApiManager {
 
     private void consumeToken() {
         synchronized (tokenBucket) {
+            long startTime = System.currentTimeMillis();
             while (!tokenBucket.tryConsume()) {
+                long waitedTime = System.currentTimeMillis() - startTime;
+                if (waitedTime >= 60000 * 60 * 3) {
+                    log.warn("⏳ Waited for 20 seconds, but still no token available! Retrying...");
+                } else {
+                    log.info("🚦 No tokens available. Waiting... (Elapsed: {} ms)", waitedTime);
+                }
+
                 try {
-                    tokenBucket.wait();
+                    tokenBucket.wait(60000 * 60 * 3 - waitedTime); // 남은 대기 시간만큼만 대기
+                    log.info("🔔 Woke up! Retrying token consumption...");
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
+                    log.error("❌ Thread was interrupted while waiting for token", e);
                     throw new RuntimeException("Thread was interrupted while waiting for token", e);
                 }
             }
+
+            log.info("✅ Token consumed successfully! Remaining tokens: {}", tokenBucket.getAvailableTokens());
         }
     }
+
+
 
     /**
      *  WebClient 요청을 처리하는 공통 메서드
@@ -115,6 +130,8 @@ public class  PubgApiManager {
         try {
             String jsonResponse = webClient.get()
                     .uri(telemetryUrl)
+                    .header(HttpHeaders.ACCEPT, pubgUtil.getAccept())
+                    .header(HttpHeaders.CONTENT_TYPE, "application/json")
                     .retrieve()
                     .bodyToMono(String.class) // 🔥 String으로 직접 변환
                     .doOnNext(response -> log.info("✅ Response received (size={} bytes)", response.length()))
@@ -141,15 +158,16 @@ public class  PubgApiManager {
 
             log.info("📊 Extracted {} relevant events", filteredEvents.size());
             return filteredEvents; // 최종적으로 필터링된 JsonNode 반환
-
         } catch (WebClientResponseException e) {
             log.error("❌ WebClientResponseException: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
         } catch (IOException e) {
             log.error("❌ JSON parsing error: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
         } catch (Exception e) {
             log.error("❌ General Exception occurred: {}", e.getMessage(), e);
+            throw new RuntimeException(e);
         }
-        return objectMapper.createArrayNode(); // 예외 발생 시 빈 배열 반환
     }
 
 }

@@ -1,5 +1,6 @@
 package com.jkky98.spubg.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.MemberMatch;
 import lombok.RequiredArgsConstructor;
@@ -51,8 +52,15 @@ public class MatchWeaponDetailProcessingQueue {
                 Thread.currentThread().interrupt();
                 log.error("Worker Thread is interrupted", e);
                 break;
+            } catch (JsonProcessingException e) {
+                Thread.currentThread().interrupt();
+                log.error("Failed to process queue", e);
+                break;
             }
         }
+    }
+    public synchronized int getQueueSize() {
+        return queue.size();
     }
 
     public void shutdown() {

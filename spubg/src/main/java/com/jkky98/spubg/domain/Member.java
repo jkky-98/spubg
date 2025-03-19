@@ -8,6 +8,7 @@ import java.util.List;
 
 @Entity
 @Getter
+@Setter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
@@ -25,6 +26,8 @@ public class Member {
     private String banType;
 
     private String username;
+
+    private String discordName;
 
     @OneToMany(mappedBy = "member")
     @Builder.Default

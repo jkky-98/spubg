@@ -1,7 +1,11 @@
 pubg:
   api-key: ${pubgApiKey}
 
-
+discord:
+  bot:
+    token: ${discordToken}
+  channel:
+    id: ${discordChannelId}
 spring:
   datasource:
     url: jdbc:h2:tcp://localhost/~/spubg
@@ -28,3 +32,10 @@ spring:
           format_sql: true
           order_inserts: true
           order_updates: true
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.jkky98.spubg.domain
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

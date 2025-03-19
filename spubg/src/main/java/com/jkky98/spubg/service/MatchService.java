@@ -3,9 +3,14 @@ package com.jkky98.spubg.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.GameMode;
 import com.jkky98.spubg.domain.Match;
+import com.jkky98.spubg.domain.Member;
+import com.jkky98.spubg.domain.MemberMatch;
+import com.jkky98.spubg.domain.init.InitMemberList;
 import com.jkky98.spubg.pubg.request.PubgApiManager;
 import com.jkky98.spubg.pubg.util.GameMap;
 import com.jkky98.spubg.repository.MatchRepository;
+import com.jkky98.spubg.repository.MemberMatchRepository;
+import com.jkky98.spubg.repository.MemberRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +21,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -24,6 +30,8 @@ public class MatchService {
 
     private final MatchRepository matchRepository;
     private final PubgApiManager pubgApiManager;
+    private final MemberRepository memberRepository;
+    private final MemberMatchRepository memberMatchRepository;
 
     @Transactional
     public List<Match> saveAll(List<Match> matchList) {
@@ -111,6 +119,38 @@ public class MatchService {
     private void updateMatch(JsonNode rootNode, Match match) {
         log.info("🔹 업데이트 시작: Match ID = {}", match.getMatchApiId());
         Match matchUpdated = matchRepository.findById(match.getId()).orElseThrow(EntityNotFoundException::new);
+
+        /**
+         * 누락 플레이어 있다면 업데이트
+         */
+        List<String> searchCond = memberRepository.findAll()
+                .stream()
+                .map(Member::getAccountId)
+                .toList();
+
+        for (JsonNode includedNode : rootNode.get("included")) {
+            if (includedNode.get("type").asText().equals("participant")) {
+                String accountId = includedNode.get("attributes").get("stats").get("playerId").asText();
+                if (searchCond.contains(accountId)) {
+                    Optional<MemberMatch> byMemberAccountIdAndMatch =
+                            memberMatchRepository.findByMemberAccountIdAndMatch(accountId, matchUpdated);
+
+                    byMemberAccountIdAndMatch.orElseGet(
+                            () -> {
+                                Member member = memberRepository.findByAccountId(accountId).orElseThrow();
+                                MemberMatch memberMatch = MemberMatch.builder()
+                                        .member(member)
+                                        .match(matchUpdated)
+                                        .boolIsAnalysis(false)
+                                        .build();
+
+                                memberMatchRepository.save(memberMatch);
+                                return memberMatch;
+                            });
+                }
+            }
+        }
+
 
         matchUpdated.setBoolIsAnalysis(true);
         log.info("✅ 분석 여부 설정: boolIsAnalysis = {}", matchUpdated.isBoolIsAnalysis());

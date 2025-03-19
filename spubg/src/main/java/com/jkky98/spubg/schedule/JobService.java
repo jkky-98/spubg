@@ -8,12 +8,12 @@ import com.jkky98.spubg.service.MatchWeaponDetailProcessingQueue;
 import com.jkky98.spubg.service.MemberMatchService;
 import com.jkky98.spubg.service.MemberService;
 import lombok.RequiredArgsConstructor;
-import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 @Slf4j
@@ -24,12 +24,12 @@ public class JobService {
     private final MatchWeaponDetailProcessingQueue matchWeaponDetailProcessingQueue;
     private final MemberService memberService;
 
-    @Synchronized
-    @Scheduled(fixedRate = 60000) // 1분마다 실행
-    public void fetchAndProcessMatches() {
-        // ✅ 기존 작업이 남아있으면 실행하지 않음
-        if (!matchProcessingQueue.isQueueEmpty()) {
-            log.info("Queue is not empty. Skipping this execution. : matchProcessingQueue");
+    @Scheduled(fixedRate = 60000 * 60) // 1분마다 실행
+    public synchronized void fetchAndProcessMatches() {
+        int remainingTasks = matchProcessingQueue.getQueueSize();
+
+        if (remainingTasks > 0) {
+            log.info("✅✅✅ 기존 매치 프로세스 작업이 남아있습니다. 남은 작업: {}개. 작업을 패싱합니다. ✅✅✅", remainingTasks);
             return;
         }
 
@@ -37,7 +37,7 @@ public class JobService {
         List<Match> matches = matchRepository.findByBoolIsAnalysisFalse();
 
         if (matches.isEmpty()) {
-            log.info("No matches found for processing.");
+            log.info("✅✅✅ 작업할 매치가 존재하지 않습니다. 작업을 패싱합니다. ✅✅✅");
             return;
         }
 
@@ -47,34 +47,34 @@ public class JobService {
         matchProcessingQueue.startProcessing(); // ✅ 작업 시작
     }
 
-    @Synchronized
-    @Scheduled(fixedRate = 60000)
-    public void fetchAndProcessMatchWeaponDetail() {
-        // ✅ 기존 작업이 남아있으면 실행하지 않음
-        if (!matchWeaponDetailProcessingQueue.isQueueEmpty()) {
-            log.info("[fetchAndProcessMatchWeaponDetail] Queue is not empty. Skipping this execution. : matchWeaponDetailProcessingQueue");
+    @Scheduled(fixedRate = 60000 * 60)
+    public synchronized void fetchAndProcessMatchWeaponDetail() {
+        int remainingTasks = matchWeaponDetailProcessingQueue.getQueueSize();
+
+        if (remainingTasks > 0) {
+            log.info("✅✅✅ 기존 딜량 추출 프로세스 작업이 남아있습니다. 남은 작업: {}개. 작업을 패싱합니다. ✅✅✅", remainingTasks);
             return;
         }
 
         List<MemberMatch> memberMatchNeedToAnaysis = memberMatchService.getMemberMatchNeedToAnaysis();
 
         if (memberMatchNeedToAnaysis.isEmpty()) {
-            log.info("[fetchAndProcessMatchWeaponDetail] No matches found for processing. Skipping this execution. : memberMatchNeedToAnaysis");
+            log.info("✅✅✅ 작업할 딜량 데이터 추출 작업이 존재하지 않습니다. 작업을 패싱합니다. ✅✅✅");
             return;
         }
 
         log.info("[fetchAndProcessMatchWeaponDetail] Adding {} MemberMatches to queue", memberMatchNeedToAnaysis.size());
         memberMatchNeedToAnaysis.forEach(matchWeaponDetailProcessingQueue::addMemberMatch);
 
-        log.info("[fetchAndProcessMatchWeaponDetail] StartProcessing : " + memberMatchNeedToAnaysis.size());
+        log.info("[fetchAndProcessMatchWeaponDetail] StartProcessing : {}", memberMatchNeedToAnaysis.size());
         matchWeaponDetailProcessingQueue.startProcessing(); // 작업 시작
     }
 
-    @Synchronized
-    @Scheduled(fixedRate = 60000)
-    public void fetchAndProcessMember() {
+    @Scheduled(fixedRate = 60000 * 60)
+    public synchronized void fetchAndProcessMember() {
         memberService.fetchMember();
     }
 }
+
 
 
