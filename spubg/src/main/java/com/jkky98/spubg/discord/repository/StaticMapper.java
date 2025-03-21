@@ -14,4 +14,5 @@ public interface StaticMapper {
     List<LotOfFireRanking> getLotOfFireRankings();
     List<PhaseDealtRanking> getPhaseDealtRankings();
     List<ClutchDealtRanking> getClutchDealtRankings();
+    List<GroggyRanking> getGroggyRankings();
 }

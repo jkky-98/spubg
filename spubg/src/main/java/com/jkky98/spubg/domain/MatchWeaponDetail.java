@@ -39,6 +39,8 @@ public class MatchWeaponDetail {
 
     private boolean attackerIsInVehicle;
 
+    private boolean groggy;
+
     // isGame
     @Column(precision = 10, scale = 2)
     private BigDecimal phase;

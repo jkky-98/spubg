@@ -16,6 +16,7 @@ public class MessageResponseService {
         embed.setTitle("**📜 명령어 도움말 📜**");
         embed.setDescription("**아래는 SPUBG BOT에서 사용 가능한 명령어 목록입니다.**");
         embed.setDescription("**현재 베타서비스는 스팀, 스쿼드 게임의 데이터만 처리하고 있습니다.**");
+        embed.setDescription("**3월 9일 데이터부터 수집되고 있습니다.**");
         embed.setDescription("**명령어 작성시 {...} 은 변수입니다. '{', '}' 를 빼고 작성하면 됩니다.**");
         embed.setColor(Color.ORANGE);
         embed.addField("**!도움**", "-  봇 사용법에 대해 알려드립니다, 명령어 목록을 표시합니다.", false);
@@ -29,6 +30,7 @@ public class MessageResponseService {
         embed.addField("**!발사왕**", "-  총알을 많이 쓰는 사람은 누굴까요? 차에 총알을 잘 실어놓지 않으면 팀원의 총알이 거덜날거에요!", false);
         embed.addField("**!후반딜러**", "-  어려운 환경속! 후반 페이즈록 갈 수록 딜량을 잘 뽑아내는 사람은 누굴까요?(평균 딜량 대비 후반 페이즈 딜량으로 계산됩니다.)", false);
         embed.addField("**!클러치**", "-  체력이 없을 때도 어김없이 적에게 데미지를 주려는 사람입니다!", false);
+        embed.addField("**!기절왕**", "- 기절 이벤트를 가장 잘 만들어주는 팀원은 누굴까요? 팀의 메인 공격수에요!", false);
         embed.addField("**!최근게임딜량그래프**", "\uD83D\uDEE0\uFE0F개발 예정\uD83D\uDEE0\uFE0F", false);
 
         embed.setFooter("제작자: jkky98 - aal2525@ajou.ac.kr", "https://img.icons8.com/?size=100&id=xqPslIlorct3&format=png&color=000000");
@@ -390,4 +392,43 @@ public class MessageResponseService {
         event.getChannel().sendMessage(tableBuilder.toString()).queue();
     }
 
+    public void sendGroggyRanking(MessageReceivedEvent event, List<GroggyRanking> groggyRankings) {
+        if (groggyRankings.isEmpty()) {
+            event.getChannel().sendMessage("💥 No groggy rankings available.").queue();
+            return;
+        }
+
+        // ✅ 랭킹 기준으로 정렬 (낮은 순위 번호가 상위)
+        groggyRankings.sort(Comparator.comparingInt(GroggyRanking::getRanking));
+
+        // 💥 그로기 랭킹 테이블 문자열 구성 (코드 블록 내 출력)
+        StringBuilder tableBuilder = new StringBuilder("```");
+        tableBuilder.append("💥 **Groggy Rankings** 💥\n");
+        tableBuilder.append("Top players ranked by groggy performance.\n\n");
+        tableBuilder.append(String.format("%-15s %-10s %-15s %-5s%n", "PLAYER", "MATCHES", "GROGGY per Match", "RANK"));
+        tableBuilder.append("-----------------------------------------------------------\n");
+
+        for (GroggyRanking ranking : groggyRankings) {
+            tableBuilder.append(String.format("%-15s %-10d %-15.2f %-5d%n",
+                    ranking.getUsername(),
+                    ranking.getTotalMatches(),
+                    ranking.getGroggyRatio(),
+                    ranking.getRanking()
+            ));
+        }
+        tableBuilder.append("```");
+
+        // 임베드 메시지 구성
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.setTitle("💥 **Groggy Rankings** 💥");
+        embed.setDescription("이 랭킹은 플레이어가 참가한 전체 경기 대비 상대를 기절시킨 경기의 비율을 기반으로 산출됩니다.\n" +
+                "팀의 메인 공격수 포지션을 볼 수 있어요!");
+        embed.setColor(Color.ORANGE);
+        embed.addField("📊 데이터 기준", "총 경기 수 대비 기절(%)", false);
+        embed.setFooter("📅 Latest Data | Created by: jkky98", "https://img.icons8.com/?size=100&id=xqPslIlorct3&format=png&color=000000");
+
+        // 임베드 메시지와 테이블 메시지 전송
+        event.getChannel().sendMessageEmbeds(embed.build()).queue();
+        event.getChannel().sendMessage(tableBuilder.toString()).queue();
+    }
 }

@@ -173,4 +173,24 @@
              ) t
         ORDER BY ranking;
     </select>
+
+    <select id="getGroggyRankings" resultType="com.jkky98.spubg.discord.domain.GroggyRanking">
+        SELECT
+            t.username,
+            t.total_matches,
+            t.groggy_ratio,
+            RANK() OVER (ORDER BY t.groggy_ratio DESC) AS ranking
+        FROM (
+                 SELECT
+                     m.username,
+                     COUNT(DISTINCT mwd.m_mch_id) AS total_matches,
+                     ROUND(SUM(CASE WHEN mwd.groggy = true THEN 1 ELSE 0 END) * 1.0 / COUNT(DISTINCT mwd.m_mch_id), 2) AS groggy_ratio
+                 FROM MATCH_WEAPON_DETAIL mwd
+                          JOIN MEMBER_MATCH mm ON mm.M_MCH_ID = mwd.M_MCH_ID
+                          JOIN MEMBER m ON mm.MEMBER_ID = m.MEMBER_ID
+                          JOIN MATCH mch ON mm.MATCH_ID = mch.MATCH_ID
+                 GROUP BY mm.MEMBER_ID, m.username
+             ) AS t
+        ORDER BY ranking;
+    </select>
 </mapper>

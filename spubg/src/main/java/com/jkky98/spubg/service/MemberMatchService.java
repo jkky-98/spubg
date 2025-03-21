@@ -4,6 +4,8 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.*;
 import com.jkky98.spubg.pubg.request.PubgApiManager;
+import com.jkky98.spubg.pubg.request.TelemetryEventType;
+import com.jkky98.spubg.pubg.request.TelemetryRequestBuilder;
 import com.jkky98.spubg.repository.MatchWeaponDetailRepository;
 import com.jkky98.spubg.repository.MemberMatchRepository;
 import lombok.Data;
@@ -17,11 +19,10 @@ import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.StreamSupport;
+
+import static com.jkky98.spubg.pubg.request.TelemetryEventType.*;
 
 @Service
 @RequiredArgsConstructor
@@ -31,6 +32,7 @@ public class MemberMatchService {
     private final MemberMatchRepository memberMatchRepository;
     private final MatchWeaponDetailRepository mwDetailRepository;
     private final PubgApiManager pubgApiManager;
+    private final TelemetryRequestBuilder telemetryRequestBuilder;
 
     @Transactional
     public void saveMatchWeaponDetail(MemberMatch memberMatch) throws JsonProcessingException {
@@ -41,7 +43,13 @@ public class MemberMatchService {
         String telemetryUrl = memberMatchFind.getMatch().getAssetUrl();
         String accountId = memberMatchFind.getMember().getAccountId();
 
-        JsonNode rootNode = pubgApiManager.requestTelemetry(telemetryUrl);
+//        JsonNode rootNode = pubgApiManager.requestTelemetry(telemetryUrl);
+        JsonNode rootNode = telemetryRequestBuilder
+                .uri(telemetryUrl)
+                .event(LOG_PLAYER_ATTACK)
+                .event(LOG_PLAYER_TAKE_DAMAGE)
+                .event(LOG_PLAYER_MAKE_GROGGY)
+                .execute();
 
         log.info("✅ Telemetry data successfully retrieved.");
 
@@ -54,13 +62,14 @@ public class MemberMatchService {
 
         List<JsonNode> attackNodes = getLogPlayerAttackEvents(rootNode, accountId);
         List<JsonNode> damageNodes = getLogPlayerTakeDamage(rootNode, accountId);
+        List<JsonNode> groggyNodes = getLogPlayerMakeGroggy(rootNode, accountId);
 
         log.info("📊 Found {} LogPlayerAttack events for AccountID: {}", attackNodes.size(), accountId);
         log.info("📊 Found {} LogPlayerTakeDamage events for AccountID: {}", damageNodes.size(), accountId);
 
         // key : attackId
         // value : WeaponHistory
-        Map<String, WeaponHistory> weaponHistoryMap = buildWeaponHistoryMap(attackNodes, damageNodes);
+        Map<String, WeaponHistory> weaponHistoryMap = buildWeaponHistoryMap(attackNodes, damageNodes, groggyNodes);
 
         log.info("🔄 Built WeaponHistoryMap with {} entries", weaponHistoryMap.size());
 
@@ -80,6 +89,7 @@ public class MemberMatchService {
                     .phase(weaponHistory.phase)
                     .memberMatch(memberMatch)
                     .damDistance(weaponHistory.damDistance)
+                    .groggy(weaponHistory.groggy)
                     .build();
 
             matchWeaponDetails.add(mwDetail);
@@ -110,7 +120,7 @@ public class MemberMatchService {
         List<JsonNode> attackEvents = StreamSupport.stream(rootNode.spliterator(), false)
                 .filter(eventNode -> {
                     boolean hasT = eventNode.has("_T");
-                    boolean isLogPlayerAttack = hasT && "LogPlayerAttack".equals(eventNode.get("_T").asText());
+                    boolean isLogPlayerAttack = hasT && LOG_PLAYER_ATTACK.getEventName().equals(eventNode.get("_T").asText());
                     boolean hasAttacker = eventNode.has("attacker") && eventNode.get("attacker").has("accountId");
                     boolean matchesAccountId = hasAttacker && eventNode.get("attacker").get("accountId").asText().equals(accountId);
 
@@ -134,7 +144,7 @@ public class MemberMatchService {
         List<JsonNode> damageEvents = StreamSupport.stream(rootNode.spliterator(), false)
                 .filter(eventNode -> {
                     boolean hasT = eventNode.has("_T");
-                    boolean isLogPlayerTakeDamage = hasT && "LogPlayerTakeDamage".equals(eventNode.get("_T").asText());
+                    boolean isLogPlayerTakeDamage = hasT && LOG_PLAYER_TAKE_DAMAGE.getEventName().equals(eventNode.get("_T").asText());
                     boolean hasAttacker = eventNode.has("attacker") && eventNode.get("attacker").has("accountId");
                     boolean matchesAttackerAccountId = hasAttacker && eventNode.get("attacker").get("accountId").asText().equals(attackerAccountId);
                     boolean hasAttackId = eventNode.has("attackId");
@@ -155,8 +165,34 @@ public class MemberMatchService {
         return damageEvents;
     }
 
+    private List<JsonNode> getLogPlayerMakeGroggy(JsonNode rootNode, String attackerAccountId) {
+        log.info("🔎 Filtering LogPlayerMakeGroggy events for attackerAccountId: {}", attackerAccountId);
 
-    private Map<String, WeaponHistory> buildWeaponHistoryMap(List<JsonNode> attackNodes, List<JsonNode> damageNodes) {
+        List<JsonNode> groggyEvents = StreamSupport.stream(rootNode.spliterator(), false)
+                .filter(eventNode -> {
+                    boolean hasT = eventNode.has("_T");
+                    boolean isLogPlayerMakeGroggy = hasT && LOG_PLAYER_MAKE_GROGGY.getEventName().equals(eventNode.get("_T").asText());
+                    boolean hasAttacker = eventNode.has("attacker") && eventNode.get("attacker").has("accountId");
+                    boolean matchesAttackerAccountId = hasAttacker && eventNode.get("attacker").get("accountId").asText().equals(attackerAccountId);
+                    boolean hasAttackId = eventNode.has("attackId");
+                    boolean validAttackId = hasAttackId && !"-1".equals(eventNode.get("attackId").asText());
+
+                    log.debug("🧐 Event Type: {}, Has Attacker: {}, Matches Attacker AccountId: {}, Has attackId: {}, Valid AttackId: {}",
+                            hasT ? eventNode.get("_T").asText() : "N/A",
+                            hasAttacker,
+                            matchesAttackerAccountId,
+                            hasAttackId,
+                            validAttackId);
+                    return isLogPlayerMakeGroggy && matchesAttackerAccountId && validAttackId;
+                })
+                .toList();
+
+        log.info("✅ Found {} LogPlayerMakeGroggy events for attackerAccountId: {}", groggyEvents.size(), attackerAccountId);
+        return groggyEvents;
+    }
+
+
+    private Map<String, WeaponHistory> buildWeaponHistoryMap(List<JsonNode> attackNodes, List<JsonNode> damageNodes, List<JsonNode> groggyNodes) {
         Map<String, WeaponHistory> weaponHistoryMap = new HashMap<>();
 
         for (JsonNode attackNode : attackNodes) {
@@ -195,9 +231,16 @@ public class MemberMatchService {
                     BigDecimal damX = BigDecimal.valueOf(damageNode.get("victim").get("location").get("x").asDouble());
                     BigDecimal damY = BigDecimal.valueOf(damageNode.get("victim").get("location").get("y").asDouble());
                     BigDecimal damZ = BigDecimal.valueOf(damageNode.get("victim").get("location").get("z").asDouble());
-
+                    // 거리 설정
                     BigDecimal distance = calculateDistance(weaponHistory.attX, weaponHistory.attY, weaponHistory.attZ, damX, damY, damZ);
                     weaponHistory.setDamDistance(distance);
+                    // 기절 여부 설정
+                    Optional<JsonNode> matchingGroggyNode = groggyNodes.stream()
+                            .filter(groggyNode -> groggyNode.get("attackId").asText().equals(attackId))
+                            .findFirst();
+                    matchingGroggyNode.ifPresent(node -> {
+                            weaponHistory.setGroggy(true);
+                    });
                 }
 
             } catch (Exception e) {
@@ -232,6 +275,8 @@ public class MemberMatchService {
         private BigDecimal attZ;
 
         private BigDecimal damDistance;
+
+        private boolean groggy = false;
 
         public WeaponHistory(WeaponName weaponName,
                              LocalDateTime createdAt,
