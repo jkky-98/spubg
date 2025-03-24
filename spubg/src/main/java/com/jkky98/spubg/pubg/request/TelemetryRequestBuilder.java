@@ -34,7 +34,7 @@ public class TelemetryRequestBuilder {
     }
 
     public JsonNode execute() {
-        log.info("📡 Fetching telemetry data from: {}", telemetryUrl);
+        log.info("[Telemetry Fetch] Try fetching telemetry data from: {}", telemetryUrl);
         try {
             String jsonResponse = webClient.get()
                     .uri(telemetryUrl)
@@ -42,16 +42,16 @@ public class TelemetryRequestBuilder {
                     .header(HttpHeaders.CONTENT_TYPE, "application/json")
                     .retrieve()
                     .bodyToMono(String.class)
-                    .doOnNext(response -> log.info("✅ Response received (size={} bytes)", response.length()))
-                    .doOnError(error -> log.error("❌ Error fetching telemetry data: ", error))
+                    .doOnNext(response -> log.info("[Telemetry Fetch] ✅ Response received with webClient (size={} bytes)", response.length()))
+                    .doOnError(error -> log.error("[Telemetry Fetch] ❌ Error fetching telemetry data Response received with webClient: ", error))
                     .block();
 
             if (jsonResponse == null || jsonResponse.isEmpty()) {
-                throw new RuntimeException("❌ Empty response from telemetry API");
+                throw new RuntimeException("[Telemetry Fetch] ❌ Empty or null json response from telemetry API");
             }
 
             JsonNode rootNode = objectMapper.readTree(jsonResponse);
-            log.info("✅ Successfully parsed telemetry JSON");
+            log.info("[Telemetry Fetch] ✅ Successfully parsed telemetry JSON");
 
             // 필터링
             ArrayNode filteredEvents = objectMapper.createArrayNode();
@@ -64,10 +64,10 @@ public class TelemetryRequestBuilder {
                 }
             });
 
-            log.info("📊 Extracted {} relevant events", filteredEvents.size());
+            log.info("[Telemetry Fetch] 📊 Extracted {} relevant events", filteredEvents.size());
             return filteredEvents;
         } catch (Exception e) {
-            log.error("❌ Exception occurred: {}", e.getMessage(), e);
+            log.error("[Telemetry Fetch] ❌ Exception occurred: {}", e.getMessage(), e);
             throw new RuntimeException(e);
         }
     }

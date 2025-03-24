@@ -7,6 +7,7 @@ import com.jkky98.spubg.domain.Member;
 import com.jkky98.spubg.domain.MemberMatch;
 import com.jkky98.spubg.domain.init.InitMemberList;
 import com.jkky98.spubg.pubg.request.PubgApiManager;
+import com.jkky98.spubg.pubg.request.PubgApiRequestService;
 import com.jkky98.spubg.repository.MatchRepository;
 import com.jkky98.spubg.repository.MemberMatchRepository;
 import com.jkky98.spubg.repository.MemberRepository;
@@ -26,8 +27,8 @@ public class MemberService {
 
     private final MemberRepository memberRepository;
     private final MatchRepository matchRepository;
-    private final PubgApiManager pubgApiManager;
     private final MemberMatchRepository memberMatchRepository;
+    private final PubgApiRequestService pubgApiRequestService;
 
     @Transactional
     public void fetchMember() {
@@ -39,7 +40,7 @@ public class MemberService {
                 .toList();
         log.info("[멤버 최근 기록 패치] 👥 총 {}명의 멤버 데이터 조회 완료", allUsernames.size());
 
-        JsonNode rootNode = pubgApiManager.requestManyMember(allUsernames);
+        JsonNode rootNode = pubgApiRequestService.requestManyMembers(allUsernames);
         JsonNode dataNode = rootNode.get("data");
 
         if (checkFetchable(dataNode)) {

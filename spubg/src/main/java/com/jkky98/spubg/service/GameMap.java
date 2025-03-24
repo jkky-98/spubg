@@ -1,4 +1,4 @@
-package com.jkky98.spubg.pubg.util;
+package com.jkky98.spubg.service;
 
 import java.util.HashMap;
 import java.util.Map;

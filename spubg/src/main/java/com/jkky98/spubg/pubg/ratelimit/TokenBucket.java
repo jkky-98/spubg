@@ -1,11 +1,11 @@
-package com.jkky98.spubg.pubg.util;
+package com.jkky98.spubg.pubg.ratelimit;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Semaphore;
 
-import static com.jkky98.spubg.pubg.util.TokenBucketConst.MAX_TOKENS;
+import static com.jkky98.spubg.pubg.ratelimit.TokenBucketConst.MAX_TOKENS;
 
 @Component
 @Slf4j

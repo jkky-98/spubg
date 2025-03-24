@@ -1,6 +1,6 @@
 package com.jkky98.spubg.schedule;
 
-import com.jkky98.spubg.pubg.util.TokenBucket;
+import com.jkky98.spubg.pubg.ratelimit.TokenBucket;
 import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;

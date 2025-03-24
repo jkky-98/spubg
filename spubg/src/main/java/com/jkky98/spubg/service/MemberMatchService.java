@@ -31,7 +31,6 @@ public class MemberMatchService {
 
     private final MemberMatchRepository memberMatchRepository;
     private final MatchWeaponDetailRepository mwDetailRepository;
-    private final PubgApiManager pubgApiManager;
     private final TelemetryRequestBuilder telemetryRequestBuilder;
 
     @Transactional

@@ -5,9 +5,8 @@ import com.jkky98.spubg.domain.GameMode;
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.Member;
 import com.jkky98.spubg.domain.MemberMatch;
-import com.jkky98.spubg.domain.init.InitMemberList;
 import com.jkky98.spubg.pubg.request.PubgApiManager;
-import com.jkky98.spubg.pubg.util.GameMap;
+import com.jkky98.spubg.pubg.request.PubgApiRequestService;
 import com.jkky98.spubg.repository.MatchRepository;
 import com.jkky98.spubg.repository.MemberMatchRepository;
 import com.jkky98.spubg.repository.MemberRepository;
@@ -29,7 +28,7 @@ import java.util.Optional;
 public class MatchService {
 
     private final MatchRepository matchRepository;
-    private final PubgApiManager pubgApiManager;
+    private final PubgApiRequestService pubgApiRequestService;
     private final MemberRepository memberRepository;
     private final MemberMatchRepository memberMatchRepository;
 
@@ -51,7 +50,7 @@ public class MatchService {
         try {
             log.info("[매치 패치 작업] 🔄 [START] Processing Match: {}", match.getMatchApiId());
 
-            JsonNode rootNode = pubgApiManager.requestMatch(match.getMatchApiId());
+            JsonNode rootNode = pubgApiRequestService.requestMatch(match.getMatchApiId());
             JsonNode dataNode = rootNode.get("data");
 
             log.debug("[매치 패치 작업] 📥 Match data fetched for Match ID: {} | Data: {}", match.getMatchApiId(), dataNode);

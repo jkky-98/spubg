@@ -3,6 +3,7 @@ package com.jkky98.spubg.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.Season;
 import com.jkky98.spubg.pubg.request.PubgApiManager;
+import com.jkky98.spubg.pubg.request.PubgApiRequestService;
 import com.jkky98.spubg.repository.SeasonRepository;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -16,12 +17,12 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 public class SeasonService {
     private final SeasonRepository seasonRepository;
-    private final PubgApiManager pubgApiManager;
+    private final PubgApiRequestService pubgApiRequestService;
 
     @Transactional
     public void updateSeason() {
 
-        JsonNode response = pubgApiManager.requestSeason();
+        JsonNode response = pubgApiRequestService.requestSeason();
 
         for (JsonNode seasonNode : response.get("data")) {
             boolean isCurrent = seasonNode.get("attributes").get("isCurrentSeason").asBoolean();
