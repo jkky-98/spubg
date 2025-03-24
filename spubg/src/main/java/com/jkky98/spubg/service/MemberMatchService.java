@@ -3,14 +3,13 @@ package com.jkky98.spubg.service;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.*;
-import com.jkky98.spubg.pubg.request.PubgApiManager;
-import com.jkky98.spubg.pubg.request.TelemetryEventType;
 import com.jkky98.spubg.pubg.request.TelemetryRequestBuilder;
 import com.jkky98.spubg.repository.MatchWeaponDetailRepository;
 import com.jkky98.spubg.repository.MemberMatchRepository;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,7 +30,7 @@ public class MemberMatchService {
 
     private final MemberMatchRepository memberMatchRepository;
     private final MatchWeaponDetailRepository mwDetailRepository;
-    private final TelemetryRequestBuilder telemetryRequestBuilder;
+    private final ObjectProvider<TelemetryRequestBuilder> telemetryRequestBuilder;
 
     @Transactional
     public void saveMatchWeaponDetail(MemberMatch memberMatch) throws JsonProcessingException {
@@ -42,8 +41,9 @@ public class MemberMatchService {
         String telemetryUrl = memberMatchFind.getMatch().getAssetUrl();
         String accountId = memberMatchFind.getMember().getAccountId();
 
-//        JsonNode rootNode = pubgApiManager.requestTelemetry(telemetryUrl);
-        JsonNode rootNode = telemetryRequestBuilder
+        TelemetryRequestBuilder telemetryRequestBuilderPrototype = telemetryRequestBuilder.getObject();
+
+        JsonNode rootNode = telemetryRequestBuilderPrototype
                 .uri(telemetryUrl)
                 .event(LOG_PLAYER_ATTACK)
                 .event(LOG_PLAYER_TAKE_DAMAGE)
@@ -52,7 +52,7 @@ public class MemberMatchService {
 
         log.info("[텔레메트리 패치 작업] ✅ Telemetry data successfully retrieved.");
 
-        if (rootNode.isArray() && rootNode.size() > 0) {
+        if (rootNode.isArray() && !rootNode.isEmpty()) {
             JsonNode firstNode = rootNode.get(0);
             log.info("[텔레메트리 패치 작업] 🔍 First telemetry event: {}", firstNode.toPrettyString()); // JSON을 보기 좋게 출력
         } else {

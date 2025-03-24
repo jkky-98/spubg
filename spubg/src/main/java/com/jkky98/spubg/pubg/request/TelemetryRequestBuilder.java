@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.annotation.Scope;
 import org.springframework.http.HttpHeaders;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,6 +16,7 @@ import java.util.Set;
 @Component
 @RequiredArgsConstructor
 @Slf4j
+@Scope("prototype")
 public class TelemetryRequestBuilder {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
@@ -50,17 +52,14 @@ public class TelemetryRequestBuilder {
                 throw new RuntimeException("[Telemetry Fetch] ❌ Empty or null json response from telemetry API");
             }
 
-            JsonNode rootNode = objectMapper.readTree(jsonResponse);
+            ArrayNode rootArray = (ArrayNode) objectMapper.readTree(jsonResponse);
             log.info("[Telemetry Fetch] ✅ Successfully parsed telemetry JSON");
 
-            // 필터링
             ArrayNode filteredEvents = objectMapper.createArrayNode();
-            rootNode.forEach(node -> {
-                if (node.has("_T")) {
-                    String eventType = node.get("_T").asText();
-                    if (eventTypes.contains(eventType)) {
-                        filteredEvents.add(node);
-                    }
+            rootArray.forEach(node -> {
+                String eventType = node.path("_T").asText(null);
+                if (eventTypes.contains(eventType)) {
+                    filteredEvents.add(node);
                 }
             });
 

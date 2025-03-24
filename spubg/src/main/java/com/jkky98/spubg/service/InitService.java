@@ -7,6 +7,7 @@ import com.jkky98.spubg.domain.Member;
 import com.jkky98.spubg.domain.MemberMatch;
 import com.jkky98.spubg.domain.init.InitMemberList;
 import com.jkky98.spubg.pubg.request.PubgApiManager;
+import com.jkky98.spubg.pubg.request.PubgApiRequestService;
 import com.jkky98.spubg.repository.MemberMatchRepository;
 import com.jkky98.spubg.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @Slf4j
 public class InitService {
-    private final PubgApiManager pubgApiManager;
+    private final PubgApiRequestService pubgApiRequestService;
     private final MemberRepository memberRepository;
     private final MemberMatchRepository memberMatchRepository;
     private final MatchService matchService;
@@ -33,7 +34,7 @@ public class InitService {
     public void initMember() {
         List<String> initMembers = InitMemberList.list;
 
-        JsonNode jsonNode = pubgApiManager.requestManyMember(initMembers);
+        JsonNode jsonNode = pubgApiRequestService.requestManyMembers(initMembers);
 
         List<Member> initMembersSaved = new ArrayList<>();
         Map<Member, List<Match>> initMatchAnalysisMap = new HashMap<>();

@@ -9,7 +9,7 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class TokenManager {
     private final TokenBucket tokenBucket;
-    private static final long MAX_WAIT_TIME_MS = 60L * 60 * 1000 * 3;
+    private static final long MAX_WAIT_TIME_MS = 60L * 60 * 1000 * 3; // 3 hours
 
     public void consume() {
         synchronized (tokenBucket) {
@@ -26,7 +26,7 @@ public class TokenManager {
                     tokenBucket.wait(MAX_WAIT_TIME_MS - waitedTime);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
-                    throw new RuntimeException("Thread interrupted", e);
+                    throw new RuntimeException("[TokenManager] Thread interrupted", e);
                 }
             }
 
