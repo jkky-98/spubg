@@ -102,10 +102,15 @@ public class MemberService {
     }
 
     private static List<Match> getUniqueBulkMatch(Map<Member, List<Match>> memberMatchMap) {
-        Set<Match> bulkMatch = new HashSet<>();
-        memberMatchMap.values().forEach(bulkMatch::addAll);
-        return new ArrayList<>(bulkMatch);
+        Map<String, Match> uniqueMatches = new HashMap<>();
+        memberMatchMap.values().forEach(matchList ->
+                matchList.forEach(match ->
+                        uniqueMatches.putIfAbsent(match.getMatchApiId(), match)
+                )
+        );
+        return new ArrayList<>(uniqueMatches.values());
     }
+
 
     private Map<Member, List<Match>> setMemberMatchMap(JsonNode dataNode) {
         Map<Member, List<Match>> memberMatchMap = new HashMap<>();

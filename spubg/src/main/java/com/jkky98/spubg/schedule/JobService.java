@@ -24,7 +24,7 @@ public class JobService {
     private final MatchWeaponDetailProcessingQueue matchWeaponDetailProcessingQueue;
     private final MemberService memberService;
 
-    @Scheduled(fixedRate = 60000 * 60) // 1분마다 실행
+    @Scheduled(fixedRate = 60000 * 10) // 1분마다 실행
     public synchronized void fetchAndProcessMatches() {
         int remainingTasks = matchProcessingQueue.getQueueSize();
 
@@ -47,7 +47,7 @@ public class JobService {
         matchProcessingQueue.startProcessing(); // ✅ 작업 시작
     }
 
-    @Scheduled(fixedRate = 60000 * 60)
+    @Scheduled(fixedRate = 60000 * 10)
     public synchronized void fetchAndProcessMatchWeaponDetail() {
         int remainingTasks = matchWeaponDetailProcessingQueue.getQueueSize();
 
@@ -70,7 +70,7 @@ public class JobService {
         matchWeaponDetailProcessingQueue.startProcessing(); // 작업 시작
     }
 
-    @Scheduled(fixedRate = 60000 * 60)
+    @Scheduled(fixedRate = 60000 * 10)
     public synchronized void fetchAndProcessMember() {
         memberService.fetchMember();
     }
