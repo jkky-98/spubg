@@ -9,6 +9,7 @@ import com.jkky98.spubg.service.MemberMatchService;
 import com.jkky98.spubg.service.MemberService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -25,7 +26,8 @@ public class JobService {
     private final MemberService memberService;
 
     @Scheduled(fixedRate = 60000 * 10) // 1분마다 실행
-    public synchronized void fetchAndProcessMatches() {
+    @Async
+    public void fetchAndProcessMatches() {
         int remainingTasks = matchProcessingQueue.getQueueSize();
 
         if (remainingTasks > 0) {
@@ -48,7 +50,8 @@ public class JobService {
     }
 
     @Scheduled(fixedRate = 60000 * 3)
-    public synchronized void fetchAndProcessMatchWeaponDetail() {
+    @Async
+    public void fetchAndProcessMatchWeaponDetail() {
         int remainingTasks = matchWeaponDetailProcessingQueue.getQueueSize();
 
         if (remainingTasks > 0) {
@@ -71,7 +74,8 @@ public class JobService {
     }
 
     @Scheduled(fixedRate = 60000 * 10)
-    public synchronized void fetchAndProcessMember() {
+    @Async
+    public void fetchAndProcessMember() {
         memberService.fetchMember();
     }
 }
