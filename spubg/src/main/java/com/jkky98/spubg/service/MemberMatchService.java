@@ -36,7 +36,7 @@ public class MemberMatchService {
 
     @Transactional
     public void saveMatchWeaponDetail(MemberMatch memberMatch) throws JsonProcessingException {
-        log.info("📌 [START] Processing match weapon details for MemberMatch ID: {}", memberMatch.getId());
+        log.info("[텔레메트리 패치 작업] 📌 [START] Processing match weapon details for MemberMatch ID: {}", memberMatch.getId());
 
         MemberMatch memberMatchFind = memberMatchRepository.findById(memberMatch.getId()).orElseThrow();
 
@@ -51,27 +51,27 @@ public class MemberMatchService {
                 .event(LOG_PLAYER_MAKE_GROGGY)
                 .execute();
 
-        log.info("✅ Telemetry data successfully retrieved.");
+        log.info("[텔레메트리 패치 작업] ✅ Telemetry data successfully retrieved.");
 
         if (rootNode.isArray() && rootNode.size() > 0) {
             JsonNode firstNode = rootNode.get(0);
-            log.info("🔍 First telemetry event: {}", firstNode.toPrettyString()); // JSON을 보기 좋게 출력
+            log.info("[텔레메트리 패치 작업] 🔍 First telemetry event: {}", firstNode.toPrettyString()); // JSON을 보기 좋게 출력
         } else {
-            log.warn("⚠ No telemetry events found in the response.");
+            log.warn("[텔레메트리 패치 작업] ⚠ No telemetry events found in the response.");
         }
 
         List<JsonNode> attackNodes = getLogPlayerAttackEvents(rootNode, accountId);
         List<JsonNode> damageNodes = getLogPlayerTakeDamage(rootNode, accountId);
         List<JsonNode> groggyNodes = getLogPlayerMakeGroggy(rootNode, accountId);
 
-        log.info("📊 Found {} LogPlayerAttack events for AccountID: {}", attackNodes.size(), accountId);
-        log.info("📊 Found {} LogPlayerTakeDamage events for AccountID: {}", damageNodes.size(), accountId);
+        log.info("[텔레메트리 패치 작업] 📊 Found {} LogPlayerAttack events for AccountID: {}", attackNodes.size(), accountId);
+        log.info("[텔레메트리 패치 작업] 📊 Found {} LogPlayerTakeDamage events for AccountID: {}", damageNodes.size(), accountId);
 
         // key : attackId
         // value : WeaponHistory
         Map<String, WeaponHistory> weaponHistoryMap = buildWeaponHistoryMap(attackNodes, damageNodes, groggyNodes);
 
-        log.info("🔄 Built WeaponHistoryMap with {} entries", weaponHistoryMap.size());
+        log.info("[텔레메트리 패치 작업] 🔄 Built WeaponHistoryMap with {} entries", weaponHistoryMap.size());
 
         List<MatchWeaponDetail> matchWeaponDetails = new ArrayList<>();
 
@@ -99,13 +99,13 @@ public class MemberMatchService {
                 .orElseThrow(() -> new RuntimeException("MemberMatch not found with ID: " + memberMatch.getId()));
 
         memberMatchUpdated.setBoolIsAnalysis(true);
-        log.info("🔄 Updated MemberMatch ID: {} -> boolIsAnalysis = true", memberMatchFind.getId());
+        log.info("[텔레메트리 패치 작업] 🔄 Updated MemberMatch ID: {} -> boolIsAnalysis = true", memberMatchFind.getId());
 
-        log.info("💾 Saving {} match weapon details to the database.", matchWeaponDetails.size());
+        log.info("[텔레메트리 패치 작업] 💾 Saving {} match weapon details to the database.", matchWeaponDetails.size());
         mwDetailRepository.saveAll(matchWeaponDetails);
-        log.info("✅ Match weapon details saved successfully.");
+        log.info("[텔레메트리 패치 작업] ✅ Match weapon details saved successfully.");
 
-        log.info("📌 [END] Processing completed for MemberMatch ID: {}", memberMatchFind.getId());
+        log.info("[텔레메트리 패치 작업] 📌 [END] Processing completed for MemberMatch ID: {}", memberMatchFind.getId());
     }
 
 
@@ -115,7 +115,7 @@ public class MemberMatchService {
     }
 
     private List<JsonNode> getLogPlayerAttackEvents(JsonNode rootNode, String accountId) {
-        log.info("🔎 Filtering LogPlayerAttack events for accountId: {}", accountId);
+        log.info("[텔레메트리 패치 작업] 🔎 Filtering LogPlayerAttack events for accountId: {}", accountId);
 
         List<JsonNode> attackEvents = StreamSupport.stream(rootNode.spliterator(), false)
                 .filter(eventNode -> {
@@ -124,7 +124,7 @@ public class MemberMatchService {
                     boolean hasAttacker = eventNode.has("attacker") && eventNode.get("attacker").has("accountId");
                     boolean matchesAccountId = hasAttacker && eventNode.get("attacker").get("accountId").asText().equals(accountId);
 
-                    log.debug("🧐 Event Type: {}, Has Attacker: {}, Matches AccountId: {}",
+                    log.debug("[텔레메트리 패치 작업] 🧐 Event Type: {}, Has Attacker: {}, Matches AccountId: {}",
                             hasT ? eventNode.get("_T").asText() : "N/A",
                             hasAttacker,
                             matchesAccountId);
@@ -133,13 +133,13 @@ public class MemberMatchService {
                 })
                 .toList();
 
-        log.info("✅ Found {} LogPlayerAttack events for accountId: {}", attackEvents.size(), accountId);
+        log.info("[텔레메트리 패치 작업] ✅ Found {} LogPlayerAttack events for accountId: {}", attackEvents.size(), accountId);
         return attackEvents;
     }
 
 
     private List<JsonNode> getLogPlayerTakeDamage(JsonNode rootNode, String attackerAccountId) {
-        log.info("🔎 Filtering LogPlayerTakeDamage events for attackerAccountId: {}", attackerAccountId);
+        log.info("[텔레메트리 패치 작업] 🔎 Filtering LogPlayerTakeDamage events for attackerAccountId: {}", attackerAccountId);
 
         List<JsonNode> damageEvents = StreamSupport.stream(rootNode.spliterator(), false)
                 .filter(eventNode -> {
@@ -150,7 +150,7 @@ public class MemberMatchService {
                     boolean hasAttackId = eventNode.has("attackId");
                     boolean validAttackId = hasAttackId && !"-1".equals(eventNode.get("attackId").asText());
 
-                    log.debug("🧐 Event Type: {}, Has Attacker: {}, Matches Attacker AccountId: {}, Has attackId: {}, Valid AttackId: {}",
+                    log.debug("[텔레메트리 패치 작업] 🧐 Event Type: {}, Has Attacker: {}, Matches Attacker AccountId: {}, Has attackId: {}, Valid AttackId: {}",
                             hasT ? eventNode.get("_T").asText() : "N/A",
                             hasAttacker,
                             matchesAttackerAccountId,
@@ -161,12 +161,12 @@ public class MemberMatchService {
                 })
                 .toList();
 
-        log.info("✅ Found {} LogPlayerTakeDamage events for attackerAccountId: {}", damageEvents.size(), attackerAccountId);
+        log.info("[텔레메트리 패치 작업] ✅ Found {} LogPlayerTakeDamage events for attackerAccountId: {}", damageEvents.size(), attackerAccountId);
         return damageEvents;
     }
 
     private List<JsonNode> getLogPlayerMakeGroggy(JsonNode rootNode, String attackerAccountId) {
-        log.info("🔎 Filtering LogPlayerMakeGroggy events for attackerAccountId: {}", attackerAccountId);
+        log.info("[텔레메트리 패치 작업] 🔎 Filtering LogPlayerMakeGroggy events for attackerAccountId: {}", attackerAccountId);
 
         List<JsonNode> groggyEvents = StreamSupport.stream(rootNode.spliterator(), false)
                 .filter(eventNode -> {
@@ -177,7 +177,7 @@ public class MemberMatchService {
                     boolean hasAttackId = eventNode.has("attackId");
                     boolean validAttackId = hasAttackId && !"-1".equals(eventNode.get("attackId").asText());
 
-                    log.debug("🧐 Event Type: {}, Has Attacker: {}, Matches Attacker AccountId: {}, Has attackId: {}, Valid AttackId: {}",
+                    log.debug("[텔레메트리 패치 작업] 🧐 Event Type: {}, Has Attacker: {}, Matches Attacker AccountId: {}, Has attackId: {}, Valid AttackId: {}",
                             hasT ? eventNode.get("_T").asText() : "N/A",
                             hasAttacker,
                             matchesAttackerAccountId,
@@ -187,7 +187,7 @@ public class MemberMatchService {
                 })
                 .toList();
 
-        log.info("✅ Found {} LogPlayerMakeGroggy events for attackerAccountId: {}", groggyEvents.size(), attackerAccountId);
+        log.info("[텔레메트리 패치 작업] ✅ Found {} LogPlayerMakeGroggy events for attackerAccountId: {}", groggyEvents.size(), attackerAccountId);
         return groggyEvents;
     }
 

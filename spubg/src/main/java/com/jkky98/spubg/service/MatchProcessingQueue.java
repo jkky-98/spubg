@@ -21,10 +21,10 @@ public class MatchProcessingQueue {
     public void addMatch(Match match) {
         try {
             queue.put(match);
-            log.info("Match {} added to queue", match.getMatchApiId());
+            log.info("[매치 패치 작업] Match {} added to queue", match.getMatchApiId());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("Failed to add Match to queue", e);
+            log.error("[매치 패치 작업] Failed to add Match to queue", e);
         }
     }
 
@@ -38,13 +38,13 @@ public class MatchProcessingQueue {
         while (true) {
             try {
                 Match match = queue.take();
-                log.info("Processing Match: {}", match.getMatchApiId());
+                log.info("[매치 패치 작업] Processing Match: {}", match.getMatchApiId());
 
                 // ✅ MatchService를 사용하여 트랜잭션이 적용된 상태에서 처리
                 matchService.processMatch(match);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.error("Worker Thread interrupted", e);
+                log.error("[매치 패치 작업] Worker Thread interrupted", e);
                 break;
             }
         }

@@ -49,33 +49,33 @@ public class MatchService {
     @Transactional
     public void processMatch(Match match) {
         try {
-            log.info("🔄 [START] Processing Match: {}", match.getMatchApiId());
+            log.info("[매치 패치 작업] 🔄 [START] Processing Match: {}", match.getMatchApiId());
 
             JsonNode rootNode = pubgApiManager.requestMatch(match.getMatchApiId());
             JsonNode dataNode = rootNode.get("data");
 
-            log.debug("📥 Match data fetched for Match ID: {} | Data: {}", match.getMatchApiId(), dataNode);
+            log.debug("[매치 패치 작업] 📥 Match data fetched for Match ID: {} | Data: {}", match.getMatchApiId(), dataNode);
 
             if (!isProcess(dataNode, match)) {
-                log.warn("⚠ Match {} skipped due to isProcess check.", match.getMatchApiId());
+                log.warn("[매치 패치 작업] ⚠ Match {} skipped due to isProcess check.", match.getMatchApiId());
                 return;
             }
 
             JsonNode attNode = dataNode.get("attributes");
 
-            log.debug("🛠 Match attributes retrieved for Match ID: {}", match.getMatchApiId());
+            log.debug("[매치 패치 작업] 🛠 Match attributes retrieved for Match ID: {}", match.getMatchApiId());
 
             if (!checkGameMode(attNode, match)) {
-                log.warn("⚠ Match {} skipped due to unsupported game mode.", match.getMatchApiId());
+                log.warn("[매치 패치 작업] ⚠ Match {} skipped due to unsupported game mode.", match.getMatchApiId());
                 return;
             }
 
-            log.info("📝 Updating match data for Match ID: {}", match.getMatchApiId());
+            log.info("[매치 패치 작업] 📝 Updating match data for Match ID: {}", match.getMatchApiId());
             updateMatch(rootNode, match);
 
-            log.info("✅ [SUCCESS] Match {} processed successfully", match.getMatchApiId());
+            log.info("[매치 패치 작업] ✅ [SUCCESS] Match {} processed successfully", match.getMatchApiId());
         } catch (Exception e) {
-            log.error("❌ [ERROR] Error processing Match {} | Exception: {}", match.getMatchApiId(), e.getMessage(), e);
+            log.error("[매치 패치 작업] ❌ [ERROR] Error processing Match {} | Exception: {}", match.getMatchApiId(), e.getMessage(), e);
         }
     }
 
@@ -117,7 +117,7 @@ public class MatchService {
     }
 
     private void updateMatch(JsonNode rootNode, Match match) {
-        log.info("🔹 업데이트 시작: Match ID = {}", match.getMatchApiId());
+        log.info("[매치 패치 작업] 🔹 업데이트 시작: Match ID = {}", match.getMatchApiId());
         Match matchUpdated = matchRepository.findById(match.getId()).orElseThrow(EntityNotFoundException::new);
 
         /**
@@ -153,37 +153,37 @@ public class MatchService {
 
 
         matchUpdated.setBoolIsAnalysis(true);
-        log.info("✅ 분석 여부 설정: boolIsAnalysis = {}", matchUpdated.isBoolIsAnalysis());
+        log.info("[매치 패치 작업] ✅ 분석 여부 설정: boolIsAnalysis = {}", matchUpdated.isBoolIsAnalysis());
 
         String mapName = rootNode.get("data").get("attributes").get("mapName").asText();
         LocalDateTime createdAt = parseCreatedAt(rootNode);
         String displayMapName = GameMap.getDisplayName(mapName);
         matchUpdated.setMap(displayMapName);
         matchUpdated.setCreatedAt(createdAt);
-        log.info("✅ 맵 정보 업데이트: mapName = {} -> displayName = {}", mapName, displayMapName);
+        log.info("[매치 패치 작업] ✅ 맵 정보 업데이트: mapName = {} -> displayName = {}", mapName, displayMapName);
 
         matchUpdated.setGameMode(GameMode.SQUAD);
-        log.info("✅ 게임 모드 설정: gameMode = {}", matchUpdated.getGameMode());
+        log.info("[매치 패치 작업] ✅ 게임 모드 설정: gameMode = {}", matchUpdated.getGameMode());
 
         JsonNode assetsNode = rootNode.get("data").get("relationships").get("assets").get("data");
         if (assetsNode.isArray() && assetsNode.size() > 0) {
             String assetId = assetsNode.get(0).get("id").asText();
             matchUpdated.setAssetId(assetId);
-            log.info("✅ Asset ID 설정: assetId = {}", assetId);
+            log.info("[매치 패치 작업] ✅ Asset ID 설정: assetId = {}", assetId);
 
             for (JsonNode includedNode : rootNode.get("included")) {
                 if (includedNode.get("id").asText().equals(assetId)) {
                     String assetUrl = includedNode.get("attributes").get("URL").asText();
                     matchUpdated.setAssetUrl(assetUrl);
-                    log.info("✅ Asset URL 설정: assetUrl = {}", assetUrl);
+                    log.info("[매치 패치 작업] ✅ Asset URL 설정: assetUrl = {}", assetUrl);
                     break;
                 }
             }
         } else {
-            log.warn("⚠️ Asset ID가 존재하지 않음. Match ID = {}", matchUpdated.getMatchApiId());
+            log.warn("[매치 패치 작업] ⚠️ Asset ID가 존재하지 않음. Match ID = {}", matchUpdated.getMatchApiId());
         }
 
-        log.info("✅ 업데이트 완료: Match ID = {}", matchUpdated.getMatchApiId());
+        log.info("[매치 패치 작업] ✅ 업데이트 완료: Match ID = {}", matchUpdated.getMatchApiId());
     }
 
     private static LocalDateTime parseCreatedAt(JsonNode rootNode) {

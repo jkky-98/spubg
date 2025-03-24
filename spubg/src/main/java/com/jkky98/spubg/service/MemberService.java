@@ -32,36 +32,36 @@ public class MemberService {
     @Transactional
     public void fetchMember() {
 
-        log.info("🔍 fetchMember() 시작");
+        log.info("[멤버 최근 기록 패치] 🔍 fetchMember() 시작");
 
         List<String> allUsernames = memberRepository.findAll().stream()
                 .map(Member::getUsername)
                 .toList();
-        log.info("👥 총 {}명의 멤버 데이터 조회 완료", allUsernames.size());
+        log.info("[멤버 최근 기록 패치] 👥 총 {}명의 멤버 데이터 조회 완료", allUsernames.size());
 
         JsonNode rootNode = pubgApiManager.requestManyMember(allUsernames);
         JsonNode dataNode = rootNode.get("data");
 
         if (checkFetchable(dataNode)) {
-            log.info("✅✅✅ 모든 매치가 이미 존재함. fetchMember() 종료 ✅✅✅");
+            log.info("[멤버 최근 기록 패치] ✅✅✅ 모든 매치가 이미 존재함. fetchMember() 종료 ✅✅✅");
             return;
         }
 
         Map<Member, List<Match>> memberMatchMap = setMemberMatchMap(dataNode);//memberMatchMap에 데이터 쌓기
-        log.info("📦 memberMatchMap 데이터 생성 완료. 총 {}명의 멤버가 포함됨", memberMatchMap.size());
+        log.info("[멤버 최근 기록 패치] 📦 memberMatchMap 데이터 생성 완료. 총 {}명의 멤버가 포함됨", memberMatchMap.size());
 
         List<Match> uniqueBulkMatch = getUniqueBulkMatch(memberMatchMap); // 유니크 매치 배열 만들기
-        log.info("🔄 유니크한 매치 개수: {}", uniqueBulkMatch.size());
+        log.info("[멤버 최근 기록 패치] 🔄 유니크한 매치 개수: {}", uniqueBulkMatch.size());
 
         List<Match> matchesSaved = matchRepository.saveAll(uniqueBulkMatch); // 유니크 매치 배열 리포지토리 저장
-        log.info("💾 매치 데이터 저장 완료. 저장된 매치 개수: {}", matchesSaved.size());
+        log.info("[멤버 최근 기록 패치] 💾 매치 데이터 저장 완료. 저장된 매치 개수: {}", matchesSaved.size());
 
         Map<String, Match> MatchMapSaved = matchesSaved.stream()
                 .collect(Collectors.toMap(Match::getMatchApiId, match -> match));
 
         List<MemberMatch> bulkMemberMatch = new ArrayList<>();
 
-        log.info("🔄 MemberMatch 매핑 시작");
+        log.info("[멤버 최근 기록 패치] 🔄 MemberMatch 매핑 시작");
         memberMatchMap.forEach((member, matches) -> {
             matches.forEach(
                     match -> {
@@ -76,11 +76,11 @@ public class MemberService {
                     }
             );
         });
-        log.info("🔄 MemberMatch 매핑 완료. 총 {}개 매핑됨", bulkMemberMatch.size());
+        log.info("[멤버 최근 기록 패치] 🔄 MemberMatch 매핑 완료. 총 {}개 매핑됨", bulkMemberMatch.size());
 
         memberMatchRepository.saveAll(bulkMemberMatch);
-        log.info("💾 MemberMatch 저장 완료");
-        log.info("✅ fetchMember() 완료");
+        log.info("[멤버 최근 기록 패치] 💾 MemberMatch 저장 완료");
+        log.info("[멤버 최근 기록 패치] ✅ fetchMember() 완료");
     }
 
     private boolean checkFetchable(JsonNode dataNode) {

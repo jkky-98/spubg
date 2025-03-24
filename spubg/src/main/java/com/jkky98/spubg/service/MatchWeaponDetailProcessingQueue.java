@@ -25,36 +25,36 @@ public class MatchWeaponDetailProcessingQueue {
     public void addMemberMatch(MemberMatch memberMatch) {
         try {
             queue.put(memberMatch);
-            log.info("MemberMatch {} added to queue", memberMatch.getId());
+            log.info("[텔레메트리 패치 작업] MemberMatch {} added to queue", memberMatch.getId());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("Failed to add MemberMatch to queue", e);
+            log.error("[텔레메트리 패치 작업] Failed to add MemberMatch to queue", e);
         }
     }
 
     public void startProcessing() {
-        log.info("⚡ Starting MatchWeaponDetailProcessingQueue with 5 worker threads");
+        log.info("[텔레메트리 패치 작업] ⚡ Starting MatchWeaponDetailProcessingQueue with 5 worker threads");
         for (int i = 0; i < 5; i++) {
-            log.info("🛠️ Submitting worker thread {}", i + 1);
+            log.info("[텔레메트리 패치 작업] 🛠️ Submitting worker thread {}", i + 1);
             executorService.submit(this::processQueue);
         }
-        log.info("✅ All worker threads submitted successfully");
+        log.info("[텔레메트리 패치 작업] ✅ All worker threads submitted successfully");
     }
 
     private void processQueue() {
         while (true) {
             try {
                 MemberMatch memberMatch = queue.take();
-                log.info("Processing start : {}", memberMatch.getId());
+                log.info("[텔레메트리 패치 작업] Processing start : {}", memberMatch.getId());
                 memberMatchService.saveMatchWeaponDetail(memberMatch);
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.error("Worker Thread is interrupted", e);
+                log.error("[텔레메트리 패치 작업] Worker Thread is interrupted", e);
                 break;
             } catch (JsonProcessingException e) {
                 Thread.currentThread().interrupt();
-                log.error("Failed to process queue", e);
+                log.error("[텔레메트리 패치 작업] Failed to process queue", e);
                 break;
             }
         }
