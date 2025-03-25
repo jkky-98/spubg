@@ -6,7 +6,7 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface StaticMapper {
-    List<WeaponRanking> getTopWeaponRankings(@Param("memberIds") List<Long> memberIds);
+    List<WeaponRanking> getTopWeaponRankings();
     List<HeadshotRanking> getHeadshotRankings();
     List<GrenadeRanking> getGrenadeRankings();
     List<LongDistanceRanking> getLongDistanceRankings();

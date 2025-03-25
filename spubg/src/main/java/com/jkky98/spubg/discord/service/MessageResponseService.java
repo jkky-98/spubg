@@ -6,6 +6,7 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
+import java.math.RoundingMode;
 import java.util.Comparator;
 import java.util.List;
 
@@ -66,41 +67,37 @@ public class MessageResponseService {
             return;
         }
 
-        // ✅ USERNAME 기준으로 정렬
+        // USERNAME 기준 정렬
         topWeaponRankings.sort(Comparator.comparing(WeaponRanking::getUsername));
 
-        // 🔥 랭킹 테이블을 StringBuilder로 구성
+        // 테이블 작성
         StringBuilder tableBuilder = new StringBuilder("```");
-        tableBuilder.append("🏆 **Weapon Performance Rankings** 🏆\n");
-        tableBuilder.append("Top players ranked by weapon performance (weighted average damage).\n\n");
-        tableBuilder.append(String.format("%-12s %-15s %-10s %-5s%n", "PLAYER", "WEAPON", "SCORE", "RANK"));
-        tableBuilder.append("-----------------------------------------------------\n");
+        tableBuilder.append("🏆 Weapon Performance Rankings\n\n");
+        tableBuilder.append(String.format("%-12s %-15s %-7s %-12s%n", "PLAYER", "WEAPON", "MATCH", "TOTAL SCORE"));
+        tableBuilder.append("--------------------------------------------------\n");
 
         for (WeaponRanking ranking : topWeaponRankings) {
-            tableBuilder.append(String.format("%-12s %-15s %-10.2f %-5d%n",
+            tableBuilder.append(String.format("%-12s %-15s %-7d %-12.2f%n",
                     ranking.getUsername(),
                     ranking.getWeaponName(),
-                    ranking.getWeightedAvgDamage(),
-                    ranking.getRanking()
+                    ranking.getMatch(),
+                    ranking.getTotalScore().setScale(2, RoundingMode.HALF_UP)
             ));
         }
         tableBuilder.append("```");
 
-        // Embed 메시지로 랭킹 제목과 설명을 추가
+        // 설명용 Embed 메시지
         EmbedBuilder embed = new EmbedBuilder();
-        embed.setTitle("🏆 **Weapon Performance Rankings** 🏆");
-        embed.setDescription("이 랭킹은 각 무기의 발사 대비 가중 평균 데미지 기준으로 측정됩니다.\n" +
-                "더 높은 발사 대비 가중 평균 데미지를 기록한 플레이어가 높은 순위를 차지합니다. \n" +
-                "총일을 발사할 때 맞추지 못할 경우 이 스탯은 내려갑니다.");
+        embed.setTitle("🏆 Weapon Performance Rankings");
+        embed.setDescription("무기별 경기 수와 총 점수를 기반으로 플레이어를 평가합니다.");
         embed.setColor(Color.YELLOW);
-        embed.addField("📊 데이터 기준", "무기별 총 데미지 및 평균 데미지를 반영한 가중치", false);
-        embed.setFooter("📅 최신 데이터 기준 | 제작자: jkky98", "https://img.icons8.com/?size=100&id=xqPslIlorct3&format=png&color=000000");
+        embed.setFooter("📅 최신 시즌 기준 | 제작자: jkky98", "https://img.icons8.com/?size=100&id=xqPslIlorct3&format=png&color=000000");
 
-        // 임베드 메시지 전송
+        // 전송
         event.getChannel().sendMessageEmbeds(embed.build()).queue();
-        // 표 형태의 텍스트 메시지 전송
         event.getChannel().sendMessage(tableBuilder.toString()).queue();
     }
+
 
     public void sendHeadShotTable(MessageReceivedEvent event, List<HeadshotRanking> headshotRankings) {
         if (headshotRankings.isEmpty()) {

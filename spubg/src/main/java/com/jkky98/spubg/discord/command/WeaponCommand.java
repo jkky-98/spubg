@@ -31,12 +31,7 @@ public class WeaponCommand implements Command {
     @Override
     @Transactional
     public void execute(MessageReceivedEvent event, String[] args) {
-        List<Long> memberIds = memberMapper.findAll().stream()
-                .map(Member::getMemberId)
-                .toList();
-
-        List<WeaponRanking> topWeaponRankings = staticMapper.getTopWeaponRankings(memberIds);
-        log.info(topWeaponRankings.toString());
+        List<WeaponRanking> topWeaponRankings = staticMapper.getTopWeaponRankings();
         messageResponseService.sendWeaponRankingTable(event, topWeaponRankings);
     }
 }

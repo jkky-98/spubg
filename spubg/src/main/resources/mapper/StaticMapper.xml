@@ -5,37 +5,40 @@
 <mapper namespace="com.jkky98.spubg.discord.repository.StaticMapper">
 
     <select id="getTopWeaponRankings" resultType="com.jkky98.spubg.discord.domain.WeaponRanking">
-        SELECT USERNAME, WEAPON_NAME, weighted_avg_damage, ranking
+        SELECT *
         FROM (
-        SELECT
-        USERNAME,
-        WEAPON_NAME,
-        ROUND(total_damage / total_shots, 2) AS avg_damage,
-        ROUND(weighted_damage / total_shots, 2) AS weighted_avg_damage,
-        RANK() OVER (PARTITION BY WEAPON_NAME ORDER BY weighted_damage / total_shots DESC) AS ranking
-        FROM (
-        SELECT
-        mm.MEMBER_ID,
-        mem.USERNAME,
-        mwd.WEAPON_NAME,
-        SUM(mwd.DAMAGE) AS total_damage,
-        COUNT(*) AS total_shots,
-        SUM(mwd.DAM_DISTANCE) AS total_distance,
-        SUM(mwd.DAMAGE * (1 + mwd.DAM_DISTANCE / 10000)) AS weighted_damage,
-        SUM(1 + mwd.DAM_DISTANCE / 10000) AS total_weight
-        FROM MATCH_WEAPON_DETAIL mwd
-        JOIN MEMBER_MATCH mm ON mwd.M_MCH_ID = mm.M_MCH_ID
-        JOIN MEMBER mem ON mm.MEMBER_ID = mem.MEMBER_ID
-        WHERE mm.MEMBER_ID IN
-        <foreach item="memberId" collection="memberIds" open="(" separator="," close=")">
-            #{memberId, jdbcType=BIGINT}
-        </foreach>
-        AND mwd.DAMAGE > 0
-        GROUP BY mm.MEMBER_ID, mem.USERNAME, mwd.WEAPON_NAME
-        ) AS shot_data
-        ) AS ranked_data
+                 SELECT
+                     mem.USERNAME,
+                     mwd.WEAPON_NAME,
+                     SUM(mwd.DAMAGE) AS total_damage,
+                     COUNT(DISTINCT mwd.m_mch_id) AS match,
+        ROUND(SUM(mwd.DAMAGE) / COUNT(DISTINCT mwd.m_mch_id), 2) AS per_match, -- 소수점 둘째자리까지 반올림
+        ROUND(CAST(SUM(mwd.GROGGY) AS DECIMAL(10, 2)) / CAST(COUNT(DISTINCT mwd.m_mch_id) AS DECIMAL(10, 2)), 2) AS per_groggy, -- 소수점 둘째자리까지 반올림
+        -- 총점 계산
+        ROUND(
+            SUM(mwd.DAMAGE) / COUNT(DISTINCT mwd.m_mch_id) +
+            SUM(mwd.DAM_DISTANCE / 10000) / COUNT(DISTINCT mwd.m_mch_id) +
+            CAST(SUM(mwd.GROGGY) AS DECIMAL(10, 2)) / CAST(COUNT(DISTINCT mwd.m_mch_id) AS DECIMAL(10, 2)) * 10.0
+            , 2) AS total_score, -- 소수점 둘째자리까지 반올림
+        RANK() OVER (PARTITION BY mwd.WEAPON_NAME ORDER BY
+            SUM(mwd.DAMAGE) / COUNT(DISTINCT mwd.m_mch_id) +
+            SUM(mwd.DAM_DISTANCE / 10000) / COUNT(DISTINCT mwd.m_mch_id) +
+            CAST(SUM(mwd.GROGGY) AS DECIMAL(10, 2)) / CAST(COUNT(DISTINCT mwd.m_mch_id) AS DECIMAL(10, 2)) * 10.0 DESC
+        ) AS ranking
+                 FROM MATCH_WEAPON_DETAIL mwd
+                     JOIN MEMBER_MATCH mm ON mwd.M_MCH_ID = mm.M_MCH_ID
+                     JOIN MEMBER mem ON mm.MEMBER_ID = mem.MEMBER_ID
+                     JOIN MATCH mch ON mm.MATCH_ID = mch.MATCH_ID
+                 WHERE mch.SEASON = 'division.bro.official.pc-2018-34'
+                 GROUP BY
+                     mm.MEMBER_ID,
+                     mem.USERNAME,
+                     mwd.WEAPON_NAME
+             ) ranked_data
         WHERE ranking = 1
-        ORDER BY WEAPON_NAME, ranking;
+          AND TOTAL_DAMAGE > 0
+          AND WEAPON_NAME != 'OTHER'
+        ORDER BY USERNAME;
     </select>
 
     <select id="getHeadshotRankings" resultType="com.jkky98.spubg.discord.domain.HeadshotRanking">
