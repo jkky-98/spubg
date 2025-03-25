@@ -32,6 +32,7 @@ public class MessageResponseService {
         embed.addField("**!후반딜러**", "-  어려운 환경속! 후반 페이즈록 갈 수록 딜량을 잘 뽑아내는 사람은 누굴까요?(평균 딜량 대비 후반 페이즈 딜량으로 계산됩니다.)", false);
         embed.addField("**!클러치**", "-  체력이 없을 때도 어김없이 적에게 데미지를 주려는 사람입니다!", false);
         embed.addField("**!기절왕**", "- 기절 이벤트를 가장 잘 만들어주는 팀원은 누굴까요? 팀의 메인 공격수에요!", false);
+        embed.addField("**!연막왕**", "- 연막 활용도가 높은 팀원은 누굴까요? 교전에서의 연막 활용은 중요해요!", false);
         embed.addField("**!최근게임딜량그래프**", "\uD83D\uDEE0\uFE0F개발 예정\uD83D\uDEE0\uFE0F", false);
 
         embed.setFooter("제작자: jkky98 - aal2525@ajou.ac.kr", "https://img.icons8.com/?size=100&id=xqPslIlorct3&format=png&color=000000");
@@ -428,4 +429,45 @@ public class MessageResponseService {
         event.getChannel().sendMessageEmbeds(embed.build()).queue();
         event.getChannel().sendMessage(tableBuilder.toString()).queue();
     }
+
+    public void sendSmokeRanking(MessageReceivedEvent event, List<SmokeRanking> smokeRankings) {
+        if (smokeRankings.isEmpty()) {
+            event.getChannel().sendMessage("🌫 No smoke rankings available.").queue();
+            return;
+        }
+
+        // ✅ 랭킹 기준 정렬
+        smokeRankings.sort(Comparator.comparingInt(SmokeRanking::getRanking));
+
+        // 🌫 Smoke 랭킹 테이블 문자열 구성
+        StringBuilder tableBuilder = new StringBuilder("```");
+        tableBuilder.append("🌫 **Smoke Usage Rankings** 🌫\n");
+        tableBuilder.append("Top players ranked by smoke usage per match.\n\n");
+        tableBuilder.append(String.format("%-15s %-10s %-15s %-5s%n", "PLAYER", "WEAPON", "SMOKE per Match", "RANK"));
+        tableBuilder.append("-----------------------------------------------------------\n");
+
+        for (SmokeRanking ranking : smokeRankings) {
+            tableBuilder.append(String.format("%-15s %-10s %-15.2f %-5d%n",
+                    ranking.getUsername(),
+                    ranking.getWeaponName(),
+                    ranking.getPerMatch().setScale(2, RoundingMode.HALF_UP),
+                    ranking.getRanking()
+            ));
+        }
+        tableBuilder.append("```");
+
+        // 임베드 메시지 구성
+        EmbedBuilder embed = new EmbedBuilder();
+        embed.setTitle("🌫 **Smoke Usage Rankings** 🌫");
+        embed.setDescription("이 랭킹은 플레이어가 한 매치당 얼마나 자주 스모크 무기를 사용했는지를 보여줍니다.\n" +
+                "`SMOKE_GRENADE`, `M79` 등을 포함한 스모크류 무기의 사용 빈도로 랭킹이 매겨집니다.");
+        embed.setColor(Color.GRAY);
+        embed.addField("📊 데이터 기준", "한 경기당 스모크 무기 사용 횟수", false);
+        embed.setFooter("📅 Latest Data | Created by: jkky98", "https://img.icons8.com/?size=100&id=xqPslIlorct3&format=png&color=000000");
+
+        // 임베드와 랭킹 테이블 전송
+        event.getChannel().sendMessageEmbeds(embed.build()).queue();
+        event.getChannel().sendMessage(tableBuilder.toString()).queue();
+    }
+
 }

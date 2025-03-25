@@ -196,4 +196,33 @@
              ) AS t
         ORDER BY ranking;
     </select>
+
+    <select id="getSmokeRankings" resultType="com.jkky98.spubg.discord.domain.SmokeRanking">
+        SELECT
+            USERNAME,
+            WEAPON_NAME,
+            ROUND(shot_count * 1.0 / NULLIF(total_match_count, 0), 2) AS per_match,
+            RANK() OVER (ORDER BY shot_count * 1.0 / NULLIF(total_match_count, 0) DESC) AS ranking
+        FROM (
+                 SELECT
+                     mem.USERNAME,
+                     'SMOKE' AS WEAPON_NAME,
+                     COUNT(*) AS shot_count,
+                     (
+                         SELECT COUNT(DISTINCT all_mwd.M_MCH_ID)
+                         FROM MATCH_WEAPON_DETAIL all_mwd
+                                  JOIN MEMBER_MATCH all_mm ON all_mwd.M_MCH_ID = all_mm.M_MCH_ID
+                         WHERE all_mm.MEMBER_ID = mm.MEMBER_ID
+                           AND all_mm.BOOL_IS_ANALYSIS = true
+                     ) AS total_match_count
+                 FROM MATCH_WEAPON_DETAIL mwd
+                          JOIN MEMBER_MATCH mm ON mwd.M_MCH_ID = mm.M_MCH_ID
+                          JOIN MEMBER mem ON mm.MEMBER_ID = mem.MEMBER_ID
+                          JOIN MATCH mch ON mm.MATCH_ID = mch.MATCH_ID
+                 WHERE mch.SEASON = 'division.bro.official.pc-2018-34'
+                   AND mwd.WEAPON_NAME IN ('SMOKE_GRENADE', 'M79')
+                 GROUP BY mem.USERNAME, mm.MEMBER_ID
+             ) AS derived
+        ORDER BY ranking;
+    </select>
 </mapper>
