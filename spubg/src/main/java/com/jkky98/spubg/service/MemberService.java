@@ -5,8 +5,6 @@ import com.jkky98.spubg.domain.GameMode;
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.Member;
 import com.jkky98.spubg.domain.MemberMatch;
-import com.jkky98.spubg.domain.init.InitMemberList;
-import com.jkky98.spubg.pubg.request.PubgApiManager;
 import com.jkky98.spubg.pubg.request.PubgApiRequestService;
 import com.jkky98.spubg.repository.MatchRepository;
 import com.jkky98.spubg.repository.MemberMatchRepository;
@@ -84,7 +82,7 @@ public class MemberService {
         log.info("[멤버 최근 기록 패치] ✅ fetchMember() 완료");
     }
 
-    private boolean checkFetchable(JsonNode dataNode) {
+    protected boolean checkFetchable(JsonNode dataNode) {
         Set<String> matchIds = new HashSet<>();
 
         dataNode.forEach(
@@ -113,7 +111,7 @@ public class MemberService {
     }
 
 
-    private Map<Member, List<Match>> setMemberMatchMap(JsonNode dataNode) {
+    protected Map<Member, List<Match>> setMemberMatchMap(JsonNode dataNode) {
         Map<Member, List<Match>> memberMatchMap = new HashMap<>();
 
         for (JsonNode playerNode : dataNode) {

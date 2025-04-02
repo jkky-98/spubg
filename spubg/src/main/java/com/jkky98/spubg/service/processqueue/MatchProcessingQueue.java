@@ -1,6 +1,7 @@
-package com.jkky98.spubg.service;
+package com.jkky98.spubg.service.processqueue;
 
 import com.jkky98.spubg.domain.Match;
+import com.jkky98.spubg.service.MatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

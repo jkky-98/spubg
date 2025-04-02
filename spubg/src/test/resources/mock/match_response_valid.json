@@ -1,0 +1,42 @@
+{
+  "data": {
+    "type": "match",
+    "id": "match123",
+    "attributes": {
+      "createdAt": "2025-03-28T03:00:00Z",
+      "duration": 1800,
+      "gameMode": "squad",
+      "isCustomMatch": false,
+      "matchType": "official",
+      "mapName": "Baltic_Main"
+    },
+    "relationships": {
+      "assets": {
+        "data": [
+          {
+            "type": "asset",
+            "id": "asset-id-1234"
+          }
+        ]
+      }
+    }
+  },
+  "included": [
+    {
+      "type": "asset",
+      "id": "asset-id-1234",
+      "attributes": {
+        "URL": "https://telemetry-cdn.playbattlegrounds.com/sample-asset.json"
+      }
+    },
+    {
+      "type": "participant",
+      "id": "participant-1",
+      "attributes": {
+        "stats": {
+          "playerId": "account.1234567890abcdef"
+        }
+      }
+    }
+  ]
+}

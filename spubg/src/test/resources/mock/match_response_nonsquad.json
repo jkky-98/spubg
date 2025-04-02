@@ -1,0 +1,33 @@
+{
+  "data": {
+    "type": "match",
+    "id": "nonSquadMatch",
+    "attributes": {
+      "createdAt": "2025-03-28T03:00:00Z",
+      "duration": 1800,
+      "gameMode": "solo",
+      "isCustomMatch": false,
+      "matchType": "official",
+      "mapName": "Baltic_Main"
+    },
+    "relationships": {
+      "assets": {
+        "data": [
+          {
+            "type": "asset",
+            "id": "asset-id-5678"
+          }
+        ]
+      }
+    }
+  },
+  "included": [
+    {
+      "type": "asset",
+      "id": "asset-id-5678",
+      "attributes": {
+        "URL": "https://telemetry-cdn.playbattlegrounds.com/sample-asset-solo.json"
+      }
+    }
+  ]
+}

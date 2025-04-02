@@ -5,7 +5,6 @@ import com.jkky98.spubg.domain.GameMode;
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.Member;
 import com.jkky98.spubg.domain.MemberMatch;
-import com.jkky98.spubg.pubg.request.PubgApiManager;
 import com.jkky98.spubg.pubg.request.PubgApiRequestService;
 import com.jkky98.spubg.repository.MatchRepository;
 import com.jkky98.spubg.repository.MemberMatchRepository;

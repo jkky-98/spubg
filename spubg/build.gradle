@@ -2,6 +2,7 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.4.3'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'jacoco'
 }
 
 group = 'com.jkky98'
@@ -37,6 +38,47 @@ dependencies {
 	implementation 'net.dv8tion:JDA:5.3.0'
 }
 
+jacocoTestReport {
+	dependsOn test
+
+	reports {
+		xml.required = false
+		csv.required = false
+		html.outputLocation = layout.buildDirectory.dir('jacocoHtml')
+	}
+
+	finalizedBy 'jacocoTestCoverageVerification' // jacocoTestReport 태스크가 끝난 후 실행
+}
+
+jacocoTestCoverageVerification {
+	violationRules {
+		rule {
+			enabled = true // 규칙 활성화 여부
+			element = 'CLASS' // 커버리지를 체크할 단위 설정
+
+			// 코드 커버리지를 측정할 때 사용되는 지표
+			limit {
+				counter = 'LINE'
+				value = 'COVEREDRATIO'
+				minimum = 0.30
+			}
+
+			limit {
+				counter = 'BRANCH'
+				value = 'COVEREDRATIO'
+				minimum = 0.30
+			}
+		}
+	}
+}
+
+jacoco {
+	toolVersion = "0.8.12"
+	reportsDirectory = layout.buildDirectory.dir('reports/jacoco')
+}
+
 tasks.named('test') {
 	useJUnitPlatform()
+	finalizedBy 'jacocoTestReport'
 }
+

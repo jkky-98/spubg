@@ -1,0 +1,20 @@
+{
+  "data": {
+    "type": "match",
+    "id": "customMatch",
+    "attributes": {
+      "createdAt": "2025-03-28T03:00:00Z",
+      "duration": 1800,
+      "gameMode": "squad",
+      "isCustomMatch": true,
+      "matchType": "custom",
+      "mapName": "Baltic_Main"
+    },
+    "relationships": {
+      "assets": {
+        "data": []
+      }
+    }
+  },
+  "included": []
+}

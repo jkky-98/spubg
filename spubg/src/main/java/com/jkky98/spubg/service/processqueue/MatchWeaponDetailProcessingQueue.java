@@ -1,8 +1,8 @@
-package com.jkky98.spubg.service;
+package com.jkky98.spubg.service.processqueue;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.MemberMatch;
+import com.jkky98.spubg.service.MemberMatchService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
