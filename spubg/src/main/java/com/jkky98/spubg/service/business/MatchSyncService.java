@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.GameMode;
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.pubg.request.PubgApiRequestService;
-import com.jkky98.spubg.service.GameMap;
+import com.jkky98.spubg.pubg.enums.GameMap;
 import com.jkky98.spubg.service.business.exception.MatchSyncValidationException;
 import com.jkky98.spubg.service.implement.*;
 import lombok.RequiredArgsConstructor;
@@ -42,9 +42,7 @@ public class MatchSyncService {
             validMatchSync(rootNode);
 
             /**
-             * 1. 등록된 멤버에 대해 매치 데이터 안에 멤버들 존재하는지 검사
-             * 2. 멤버-매치 엔티티에 누락 멤버-매치 엔티티 존재하는지 검사
-             * 3. 누락 존재할 경우 멤버-매치에 추가
+             *  등록된 멤버에 대해 매치 데이터 안에 멤버들 누락 존재할 경우 멤버-매치에 추가
              */
             memberMatchSyncService.syncMemberMatchIfMissing(rootNode, matchRead);
 

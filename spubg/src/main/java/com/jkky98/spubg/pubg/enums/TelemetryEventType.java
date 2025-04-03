@@ -1,4 +1,4 @@
-package com.jkky98.spubg.pubg.request;
+package com.jkky98.spubg.pubg.enums;
 
 public enum TelemetryEventType {
     LOG_ARMOR_DESTROY("LogArmorDestroy"),

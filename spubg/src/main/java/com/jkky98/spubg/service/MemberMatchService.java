@@ -21,7 +21,7 @@ import java.time.ZoneId;
 import java.util.*;
 import java.util.stream.StreamSupport;
 
-import static com.jkky98.spubg.pubg.request.TelemetryEventType.*;
+import static com.jkky98.spubg.pubg.enums.TelemetryEventType.*;
 
 @Service
 @RequiredArgsConstructor
