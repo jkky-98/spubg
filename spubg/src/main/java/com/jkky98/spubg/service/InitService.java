@@ -6,10 +6,10 @@ import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.Member;
 import com.jkky98.spubg.domain.MemberMatch;
 import com.jkky98.spubg.domain.init.InitMemberList;
-import com.jkky98.spubg.pubg.request.PubgApiManager;
 import com.jkky98.spubg.pubg.request.PubgApiRequestService;
 import com.jkky98.spubg.repository.MemberMatchRepository;
 import com.jkky98.spubg.repository.MemberRepository;
+import com.jkky98.spubg.service.implement.MatchWriter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -28,7 +28,7 @@ public class InitService {
     private final PubgApiRequestService pubgApiRequestService;
     private final MemberRepository memberRepository;
     private final MemberMatchRepository memberMatchRepository;
-    private final MatchService matchService;
+    private final MatchWriter matchWriter;
 
     @Transactional
     public void initMember() {
@@ -59,7 +59,7 @@ public class InitService {
 
         System.out.println("SIZE: " + uniqueMatches.size());
 
-        List<Match> matchesSaved = matchService.saveAll(uniqueMatches);
+        List<Match> matchesSaved = matchWriter.createAll(uniqueMatches);
 
         ofMemberMatchs(initMatchAnalysisMap, memberMatchList, membersSaved, matchesSaved);
 

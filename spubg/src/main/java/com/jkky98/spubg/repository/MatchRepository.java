@@ -10,8 +10,9 @@ import java.util.List;
 public interface MatchRepository extends JpaRepository<Match, Long> {
 
     List<Match> findByBoolIsAnalysisFalse();
-    Match findByMatchApiId(String matchApiId);
+
     boolean existsByMatchApiId(String matchApiId);
+
     @Query("SELECT COUNT(m) FROM Match m WHERE m.matchApiId IN :matchApiIds")
     long countByMatchApiIdIn(@Param("matchApiIds") List<String> matchApiIds);
 
