@@ -28,7 +28,7 @@ public class MatchWeaponDetailQueueWorker {
         while (running.get()) {
             try {
                 MemberMatch memberMatch = queue.take();
-                log.info("[텔레메트리 패치 작업] Processing start : {}", memberMatch.getId());
+                log.debug("[MatchWeaponDetailQueueWorker][process] 매치 공격 데이터 분석 시작 - MemberMatchId : {} ", memberMatch.getId());
                 String telemetryUrl = memberMatch.getMatch().getAssetUrl();
 
                 TelemetryRequestBuilder telemetryRequestBuilderPrototype = telemetryRequestBuilder.getObject();
@@ -44,11 +44,7 @@ public class MatchWeaponDetailQueueWorker {
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.error("[텔레메트리 패치 작업] Worker Thread is interrupted", e);
-                break;
-            } catch (Exception e) {
-                Thread.currentThread().interrupt();
-                log.error("[텔레메트리 패치 작업] Failed to process queue", e);
+                log.error("[MatchWeaponDetailQueueWorker][process] 워커 쓰레드 인터럽트 발생", e);
                 break;
             }
         }

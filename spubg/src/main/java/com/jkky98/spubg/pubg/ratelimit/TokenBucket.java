@@ -19,10 +19,9 @@ public class TokenBucket {
     public synchronized void refill() {
         if (tokens.availablePermits() < MAX_TOKENS) {
             tokens.release();
-            log.info("[토큰 버킷] 🆕 New token added! (Current tokens: {}/{})", tokens.availablePermits(), MAX_TOKENS);
+            log.debug("[TokenBucket][refill] 🆕 토큰 추가 (현재 토큰 수: {}/{})", tokens.availablePermits(), MAX_TOKENS);
 
-            notify(); // 🔹 대기 중인 요청 깨우기
-            log.info("[토큰 버킷] 🔔 Notified waiting threads.");
+            notify();
         }
     }
 

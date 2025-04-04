@@ -12,7 +12,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class  PubgApiManager {
+public class PubgApiManager {
     private final WebClient webClient;
     private final PubgUtil pubgUtil;
     private final TokenManager tokenManager;
@@ -32,8 +32,8 @@ public class  PubgApiManager {
                 .header(HttpHeaders.CONTENT_TYPE, "application/json")
                 .retrieve()
                 .bodyToMono(JsonNode.class)
-                .doOnNext(r -> log.info("[PubgApiClient] Response: {}", r))
-                .doOnError(e -> log.error("[PubgApiClient] Error: ", e))
+                .doOnNext(r -> log.info("[PubgApiClient][get] webClient 외부 API 요청 성공"))
+                .doOnError(e -> log.error("[PubgApiClient][get] webClient 외부 API 요청 실패", e))
                 .block();
     }
 }

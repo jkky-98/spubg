@@ -47,7 +47,6 @@ public class MatchSyncService {
             log.warn(e.getMessage());
             garbageSyncMatch(matchRead);
         }
-
     }
 
     private static void syncMatch(JsonNode rootNode, Match matchRead) {
@@ -65,6 +64,7 @@ public class MatchSyncService {
                 assetURL,
                 createdAt
         );
+        log.debug("[MatchSyncService][sync][syncMatch] 정상적으로 매치 정보가 업데이트 되었습니다. : 분석이 필요한 매치");
     }
 
     private static void updateEntity(Match matchRead, String mapName, String assetId, String assetURL, LocalDateTime createdAt) {
@@ -185,5 +185,6 @@ public class MatchSyncService {
         // 분석 완료된 매치는 분석 대상에 포함되지 않음.
         matchRead.setBoolIsAnalysis(true);
         matchRead.setGameMode(GameMode.OTHER);
+        log.debug("[MatchSyncService][sync][garbageSyncMatch] 정상적으로 매치 정보가 업데이트 되었습니다. : 예외 매치");
     }
 }

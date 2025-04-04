@@ -23,10 +23,8 @@ public class MatchProcessingQueue implements SmartLifecycle {
     public void addMatch(Match match) {
         try {
             queue.put(match);
-            log.debug("[매치 패치 작업] Match {} added to queue", match.getMatchApiId());
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("[매치 패치 작업] Failed to add Match to queue", e);
         }
     }
 
@@ -42,15 +40,15 @@ public class MatchProcessingQueue implements SmartLifecycle {
     public void start() {
         running.set(true);
         for (int i = 0; i < workerCount; i++) {
-            matchQueueWorker.process(queue, running);  // @Async 메서드 호출
+            matchQueueWorker.process(queue, running);
         }
-        log.debug("MatchProcessingQueue started with {} workers", workerCount);
+        log.debug("[MatchProcessingQueue][start] 멀티쓰레드 워커 시작 - 워커 수 : {}", workerCount);
     }
 
     @Override
     public void stop() {
         running.set(false);
-        log.debug("MatchProcessingQueue is stopping.");
+        log.debug("[MatchProcessingQueue][stop] MatchProcessingQueue 중지");
     }
 
     @Override

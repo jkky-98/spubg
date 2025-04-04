@@ -27,7 +27,7 @@ public class MatchQueueWorker {
                 // 1초 간격으로 큐 폴링
                 Match match = queue.poll(1, TimeUnit.SECONDS);
                 if (match != null) {
-                    log.debug("[매치 패치 작업] Processing Match: {}", match.getMatchApiId());
+                    log.debug("[MatchQueueWorker][process] 매치 분석 시작 - matchId : {}", match.getMatchApiId());
                     /**
                      * 외부 API 연결
                      */
@@ -36,7 +36,7 @@ public class MatchQueueWorker {
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
-                log.error("Worker Thread interrupted", e);
+                log.error("[MatchQueueWorker][process] 워커 쓰레드 인터럽트 발생", e);
                 break;
             }
         }

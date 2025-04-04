@@ -2,10 +2,12 @@ package com.jkky98.spubg.service.schedule;
 
 import com.jkky98.spubg.pubg.ratelimit.TokenBucket;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class TokenRefillService {

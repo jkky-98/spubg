@@ -43,12 +43,13 @@ public class MatchWeaponDetailProcessingQueue implements SmartLifecycle {
         for (int i = 0; i < workerCount; i++) {
             matchWeaponDetailQueueWorker.process(queue, running);
         }
-        log.debug("[MatchWeaponDetailProcessingQueue][start] started with {} workers", workerCount);
+        log.debug("[MatchWeaponDetailProcessingQueue][start] 멀티쓰레드 워커 시작 - 워커 수 : {}", workerCount);
     }
 
     @Override
     public void stop() {
         running.set(false);
+        log.debug("[MatchWeaponDetailProcessingQueue][stop] MatchProcessingQueue 중지");
     }
 
     @Override
