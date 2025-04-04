@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Optional;
 
 @Component
@@ -24,5 +25,9 @@ public class MemberMatchReader {
 
     public MemberMatch read(Long id) {
         return memberMatchRepository.findById(id).orElseThrow(EntityNotFoundException::new);
+    }
+
+    public List<MemberMatch> getMemberMatchNeedToAnaysis() {
+        return memberMatchRepository.findByMatchIsAnalyzedAndSquad();
     }
 }

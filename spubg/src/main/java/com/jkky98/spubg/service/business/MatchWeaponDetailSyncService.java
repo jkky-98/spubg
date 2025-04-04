@@ -35,13 +35,11 @@ public class MatchWeaponDetailSyncService {
     public void sync(Long memberMatchId, JsonNode rootNode) {
         MemberMatch memberMatch = memberMatchReader.read(memberMatchId);
 
-        String accountId = memberMatch.getMember().getAccountId();
-
         if (!rootNode.isArray() || rootNode.isEmpty()) {
             throw new RuntimeException("json root 노드가 의도된 형식이 아닙니다.");
         }
 
-        Map<EventType, List<JsonNode>> filteredEvents = filterEvents(rootNode, accountId);
+        Map<EventType, List<JsonNode>> filteredEvents = filterEvents(rootNode, memberMatch.getMember().getAccountId());
 
         List<JsonNode> attackNodes = filteredEvents.get(EventType.ATTACK);
         List<JsonNode> damageNodes = filteredEvents.get(EventType.DAMAGE);
@@ -52,22 +50,7 @@ public class MatchWeaponDetailSyncService {
         List<MatchWeaponDetail> matchWeaponDetails = new ArrayList<>();
 
         weaponHistoryMap.forEach((attackId, weaponHistory) -> {
-
-            MatchWeaponDetail mwDetail = MatchWeaponDetail.builder()
-                    .attackId(attackId)
-                    .damageWhere(weaponHistory.damageWhere)
-                    .weaponType(weaponHistory.weaponType)
-                    .weaponName(weaponHistory.weaponName)
-                    .damage(weaponHistory.damage)
-                    .createdAt(weaponHistory.createdAt)
-                    .attackerHealth(weaponHistory.attackerHealth)
-                    .attackerIsInVehicle(weaponHistory.attackerIsinVehicle)
-                    .phase(weaponHistory.phase)
-                    .memberMatch(memberMatch)
-                    .damDistance(weaponHistory.damDistance)
-                    .groggy(weaponHistory.groggy)
-                    .build();
-
+            MatchWeaponDetail mwDetail = ofMatchWeaponDetail(attackId, weaponHistory, memberMatch);
             matchWeaponDetails.add(mwDetail);
         });
 
@@ -81,6 +64,24 @@ public class MatchWeaponDetailSyncService {
                 memberMatch.getMatch().getMatchApiId()
                 );
 
+    }
+
+    private static MatchWeaponDetail ofMatchWeaponDetail(String attackId, WeaponHistory weaponHistory, MemberMatch memberMatch) {
+        MatchWeaponDetail mwDetail = MatchWeaponDetail.builder()
+                .attackId(attackId)
+                .damageWhere(weaponHistory.damageWhere)
+                .weaponType(weaponHistory.weaponType)
+                .weaponName(weaponHistory.weaponName)
+                .damage(weaponHistory.damage)
+                .createdAt(weaponHistory.createdAt)
+                .attackerHealth(weaponHistory.attackerHealth)
+                .attackerIsInVehicle(weaponHistory.attackerIsinVehicle)
+                .phase(weaponHistory.phase)
+                .memberMatch(memberMatch)
+                .damDistance(weaponHistory.damDistance)
+                .groggy(weaponHistory.groggy)
+                .build();
+        return mwDetail;
     }
 
     private enum EventType {
