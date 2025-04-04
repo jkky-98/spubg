@@ -4,6 +4,7 @@ import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.Member;
 import com.jkky98.spubg.domain.MemberMatch;
 import com.jkky98.spubg.repository.MemberMatchRepository;
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,5 +20,9 @@ public class MemberMatchReader {
 
     public Optional<MemberMatch> findByMemberAndMatch(Member member, Match match) {
         return memberMatchRepository.findByMemberAndMatch(member, match);
+    }
+
+    public MemberMatch read(Long id) {
+        return memberMatchRepository.findById(id).orElseThrow(EntityNotFoundException::new);
     }
 }
