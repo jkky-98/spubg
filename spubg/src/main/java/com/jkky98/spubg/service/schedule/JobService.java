@@ -3,6 +3,7 @@ package com.jkky98.spubg.service.schedule;
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.MemberMatch;
 import com.jkky98.spubg.repository.MatchRepository;
+import com.jkky98.spubg.service.implement.MatchReader;
 import com.jkky98.spubg.service.processqueue.MatchProcessingQueue;
 import com.jkky98.spubg.service.processqueue.MatchWeaponDetailProcessingQueue;
 import com.jkky98.spubg.service.MemberMatchService;
@@ -19,34 +20,25 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class JobService {
-    private final MatchRepository matchRepository;
     private final MemberMatchService memberMatchService;
     private final MatchProcessingQueue matchProcessingQueue;
     private final MatchWeaponDetailProcessingQueue matchWeaponDetailProcessingQueue;
     private final MemberService memberService;
+    private final MatchReader matchReader;
 
-    @Scheduled(fixedRate = 60000 * 10) // 1분마다 실행
+    @Scheduled(fixedRate = 60000 * 10)
     @Async
     public void fetchAndProcessMatches() {
-        int remainingTasks = matchProcessingQueue.getQueueSize();
-
-        if (remainingTasks > 0) {
-            log.info("[매치 패치 작업]✅✅✅ 기존 매치 프로세스 작업이 남아있습니다. 남은 작업: {}개. 작업을 패싱합니다. ✅✅✅", remainingTasks);
-            return;
-        }
-
-        log.info("[매치 패치 작업] Fetching matches to process...");
-        List<Match> matches = matchRepository.findByBoolIsAnalysisFalse();
+        log.debug("[매치 패치 작업] Fetching matches to process...");
+        List<Match> matches = matchReader.readByBoolIsAnalysisFalse();
 
         if (matches.isEmpty()) {
-            log.info("[매치 패치 작업] ✅✅✅ 작업할 매치가 존재하지 않습니다. 작업을 패싱합니다. ✅✅✅");
+            log.debug("[매치 패치 작업] ✅✅✅ 작업할 매치가 존재하지 않습니다. 작업을 패싱합니다. ✅✅✅");
             return;
         }
 
-        log.info("[매치 패치 작업] Adding {} matches to queue", matches.size());
+        log.debug("[매치 패치 작업] Adding {} matches to queue", matches.size());
         matches.forEach(matchProcessingQueue::addMatch);
-
-        matchProcessingQueue.startProcessing(); // ✅ 작업 시작
     }
 
     @Scheduled(fixedRate = 60000 * 3)
