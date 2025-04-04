@@ -10,16 +10,15 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Transactional
 public class MatchWriter {
 
     private final MatchRepository matchRepository;
 
-    @Transactional
     public Match create(Match match) {
         return matchRepository.save(match);
     }
 
-    @Transactional
     public List<Match> createAll(List<Match> matchs) {
         return matchRepository.saveAll(matchs);
     }

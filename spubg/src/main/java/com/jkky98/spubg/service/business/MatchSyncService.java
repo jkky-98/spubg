@@ -27,11 +27,12 @@ public class MatchSyncService {
     /**
      * 매치 데이터를 통해 멤버-매치 데이터 추가 및 누락 매치 데이터 보완
      * 매치 엔티티는 이미 DB에 존재하는 match를 받게 된다.
-     * @param match
+     * @param matchId
+     * @param rootNode
      */
     @Transactional
-    public void sync(Match match, JsonNode rootNode) {
-        Match matchRead = matchReader.read(match.getId());
+    public void sync(Long matchId, JsonNode rootNode) {
+        Match matchRead = matchReader.read(matchId);
 
         try {
             validMatchSync(rootNode);

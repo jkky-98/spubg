@@ -2,7 +2,6 @@ package com.jkky98.spubg.service.schedule;
 
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.MemberMatch;
-import com.jkky98.spubg.repository.MatchRepository;
 import com.jkky98.spubg.service.implement.MatchReader;
 import com.jkky98.spubg.service.processqueue.MatchProcessingQueue;
 import com.jkky98.spubg.service.processqueue.MatchWeaponDetailProcessingQueue;

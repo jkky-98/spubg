@@ -32,7 +32,7 @@ public class MatchQueueWorker {
                      * 외부 API 연결
                      */
                     JsonNode rootNode = pubgApiRequestService.requestMatch(match.getMatchApiId());
-                    matchSyncService.sync(match, rootNode);
+                    matchSyncService.sync(match.getId(), rootNode);
                 }
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
