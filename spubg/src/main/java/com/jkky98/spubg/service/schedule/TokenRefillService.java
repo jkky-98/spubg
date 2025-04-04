@@ -14,7 +14,6 @@ public class TokenRefillService {
 
     private final TokenBucket tokenBucket;
 
-    @Async
     @Scheduled(fixedRate = 7000) // 7초에 하나씩 토큰 리필 (토큰 최고 용량 10)
     public void refillTokens() {
         tokenBucket.refill();
