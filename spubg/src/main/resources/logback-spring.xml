@@ -1,0 +1,11 @@
+<configuration>
+    <include resource="org/springframework/boot/logging/logback/base.xml" />
+
+    <!-- com.jkky98.spubg 패키지의 로그 레벨을 DEBUG로 설정 -->
+    <logger name="com.jkky98.spubg" level="DEBUG" />
+
+    <!-- 나머지 로그는 INFO 레벨로 설정 -->
+    <root level="INFO">
+        <appender-ref ref="CONSOLE" />
+    </root>
+</configuration>
