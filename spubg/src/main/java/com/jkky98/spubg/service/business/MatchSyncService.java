@@ -3,7 +3,6 @@ package com.jkky98.spubg.service.business;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.GameMode;
 import com.jkky98.spubg.domain.Match;
-import com.jkky98.spubg.pubg.request.PubgApiRequestService;
 import com.jkky98.spubg.pubg.enums.GameMap;
 import com.jkky98.spubg.service.business.exception.MatchSyncValidationException;
 import com.jkky98.spubg.service.implement.*;
@@ -23,7 +22,6 @@ import java.util.Optional;
 public class MatchSyncService {
 
     private final MatchReader matchReader;
-    private final PubgApiRequestService pubgApiRequestService;
     private final MemberMatchSyncService memberMatchSyncService;
 
     /**
@@ -32,13 +30,10 @@ public class MatchSyncService {
      * @param match
      */
     @Transactional
-    public void sync(Match match) {
+    public void sync(Match match, JsonNode rootNode) {
         Match matchRead = matchReader.read(match.getId());
 
         try {
-
-            JsonNode rootNode = getJsonNodeFromPubgMatchAPI(matchRead);
-
             validMatchSync(rootNode);
 
             /**
@@ -49,7 +44,7 @@ public class MatchSyncService {
             syncMatch(rootNode, matchRead);
         } catch (MatchSyncValidationException e) {
             log.warn(e.getMessage());
-            garbageMatchSync(matchRead);
+            garbageSyncMatch(matchRead);
         }
 
     }
@@ -183,15 +178,11 @@ public class MatchSyncService {
         throw new MatchSyncValidationException(message);
     }
 
-    private static void garbageMatchSync(Match matchRead) {
+    private static void garbageSyncMatch(Match matchRead) {
         // 매치 엔티티를 분석 과정이 없었으나 분석 완료로 처리해버림.
         // 이유 : 위 예외를 거친 매치 엔티티는 분석필요 없음.
         // 분석 완료된 매치는 분석 대상에 포함되지 않음.
         matchRead.setBoolIsAnalysis(true);
         matchRead.setGameMode(GameMode.OTHER);
-    }
-
-    private JsonNode getJsonNodeFromPubgMatchAPI(Match match) {
-        return pubgApiRequestService.requestMatch(match.getMatchApiId());
     }
 }

@@ -1,4 +1,4 @@
-package com.jkky98.spubg.schedule;
+package com.jkky98.spubg.service.schedule;
 
 import com.jkky98.spubg.repository.MemberRepository;
 import com.jkky98.spubg.service.InitService;

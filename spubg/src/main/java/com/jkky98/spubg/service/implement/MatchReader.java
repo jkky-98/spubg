@@ -11,26 +11,24 @@ import java.util.List;
 
 @Component
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class MatchReader {
 
     private final MatchRepository matchRepository;
 
-    @Transactional(readOnly = true)
+
     public Match read(Long matchId) {
         return matchRepository.findById(matchId).orElseThrow(EntityNotFoundException::new);
     }
 
-    @Transactional(readOnly = true)
     public List<Match> readByBoolIsAnalysisFalse() {
         return matchRepository.findByBoolIsAnalysisFalse();
     }
 
-    @Transactional(readOnly = true)
     public boolean checkIfExistsByMatchApiId(String matchApiId) {
         return matchRepository.existsByMatchApiId(matchApiId);
     }
 
-    @Transactional(readOnly = true)
     public long readCountByMatchApiIds(List<String> matchApiIds) {
         return matchRepository.countByMatchApiIdIn(matchApiIds);
     }
