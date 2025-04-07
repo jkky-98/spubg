@@ -1,9 +1,7 @@
 package com.jkky98.spubg.discord.command;
 
 import com.jkky98.spubg.discord.Command;
-import com.jkky98.spubg.discord.domain.Member;
 import com.jkky98.spubg.discord.domain.WeaponRanking;
-import com.jkky98.spubg.discord.repository.MemberMapper;
 import com.jkky98.spubg.discord.repository.StaticMapper;
 import com.jkky98.spubg.discord.service.MessageResponseService;
 import lombok.RequiredArgsConstructor;
@@ -24,7 +22,7 @@ public class WeaponCommand implements Command {
 
     @Override
     public String getCommandName() {
-        return "웨폰마스터";
+        return "주총정보";
     }
 
     @Override

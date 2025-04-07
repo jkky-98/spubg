@@ -8,10 +8,7 @@ import java.math.BigDecimal;
 public class WeaponRanking {
     private String username;
     private String weaponName;
-    private BigDecimal totalDamage;
-    private int match;
-    private BigDecimal perMatch;
-    private BigDecimal perGroggy;
-    private BigDecimal totalScore;
-    private int ranking;
+    private Integer avgDamage;
+    private BigDecimal avgGroggy;
+    private Integer avgGroggyDistance;
 }

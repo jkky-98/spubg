@@ -5,72 +5,63 @@
 <mapper namespace="com.jkky98.spubg.discord.repository.StaticMapper">
 
     <select id="getTopWeaponRankings" resultType="com.jkky98.spubg.discord.domain.WeaponRanking">
-        SELECT *
+        SELECT
+            T.USERNAME,
+            T.WEAPON_NAME,
+            COALESCE(T.AVG_DAMAGE, 0) AS AVG_DAMAGE,
+            COALESCE(T.AVG_GROGGY, 0) AS AVG_GROGGY,
+            COALESCE(T.AVG_GROGGY_DISTANCE, 0) AS AVG_GROGGY_DISTANCE
         FROM (
-                 SELECT
-                     mem.USERNAME,
-                     mwd.WEAPON_NAME,
-                     SUM(mwd.DAMAGE) AS total_damage,
-                     COUNT(DISTINCT mwd.m_mch_id) AS match,
-        ROUND(SUM(mwd.DAMAGE) / COUNT(DISTINCT mwd.m_mch_id), 2) AS per_match, -- 소수점 둘째자리까지 반올림
-        ROUND(CAST(SUM(mwd.GROGGY) AS DECIMAL(10, 2)) / CAST(COUNT(DISTINCT mwd.m_mch_id) AS DECIMAL(10, 2)), 2) AS per_groggy, -- 소수점 둘째자리까지 반올림
-        -- 총점 계산
-        ROUND(
-            SUM(mwd.DAMAGE) / COUNT(DISTINCT mwd.m_mch_id) +
-            SUM(mwd.DAM_DISTANCE / 10000) / COUNT(DISTINCT mwd.m_mch_id) +
-            CAST(SUM(mwd.GROGGY) AS DECIMAL(10, 2)) / CAST(COUNT(DISTINCT mwd.m_mch_id) AS DECIMAL(10, 2)) * 10.0
-            , 2) AS total_score, -- 소수점 둘째자리까지 반올림
-        RANK() OVER (PARTITION BY mwd.WEAPON_NAME ORDER BY
-            SUM(mwd.DAMAGE) / COUNT(DISTINCT mwd.m_mch_id) +
-            SUM(mwd.DAM_DISTANCE / 10000) / COUNT(DISTINCT mwd.m_mch_id) +
-            CAST(SUM(mwd.GROGGY) AS DECIMAL(10, 2)) / CAST(COUNT(DISTINCT mwd.m_mch_id) AS DECIMAL(10, 2)) * 10.0 DESC
-        ) AS ranking
-                 FROM MATCH_WEAPON_DETAIL mwd
-                     JOIN MEMBER_MATCH mm ON mwd.M_MCH_ID = mm.M_MCH_ID
-                     JOIN MEMBER mem ON mm.MEMBER_ID = mem.MEMBER_ID
-                     JOIN MATCH mch ON mm.MATCH_ID = mch.MATCH_ID
-                 WHERE mch.SEASON = 'division.bro.official.pc-2018-34'
-                 GROUP BY
-                     mm.MEMBER_ID,
-                     mem.USERNAME,
-                     mwd.WEAPON_NAME
-             ) ranked_data
-        WHERE ranking = 1
-          AND TOTAL_DAMAGE > 0
-          AND WEAPON_NAME != 'OTHER'
-        ORDER BY USERNAME;
+            SELECT
+                MEM.USERNAME,
+                MWD.WEAPON_NAME,
+                ROUND(SUM(MWD.DAMAGE) / COUNT(DISTINCT MWD.M_MCH_ID), 0) AS AVG_DAMAGE,
+                ROUND(CAST(SUM(MWD.GROGGY) AS DECIMAL(10,2)) / CAST(COUNT(DISTINCT MWD.M_MCH_ID) AS DECIMAL(10,2)), 2) AS AVG_GROGGY,
+                ROUND(AVG(CASE WHEN MWD.GROGGY = TRUE THEN MWD.DAM_DISTANCE / 100 END), 0) AS AVG_GROGGY_DISTANCE,
+                ROW_NUMBER() OVER (
+                    PARTITION BY MEM.USERNAME
+                    ORDER BY SUM(MWD.DAMAGE) DESC
+                ) AS RN
+            FROM MATCH_WEAPON_DETAIL MWD
+            JOIN MEMBER_MATCH MM ON MWD.M_MCH_ID = MM.M_MCH_ID
+            JOIN MATCH M ON M.MATCH_ID = MM.MATCH_ID
+            JOIN MEMBER MEM ON MEM.MEMBER_ID = MM.MEMBER_ID
+            GROUP BY
+                MEM.USERNAME,
+                MWD.WEAPON_NAME
+        ) T
+        WHERE T.RN <![CDATA[<=]]> 2
+        ORDER BY T.USERNAME, T.RN;
     </select>
 
     <select id="getHeadshotRankings" resultType="com.jkky98.spubg.discord.domain.HeadshotRanking">
         SELECT
-        mem.MEMBER_ID,
-        mem.USERNAME,
-        COALESCE(headshot_data.headshot_count, 0) AS headshot_count,
-        damage_data.total_damage_count,
-        ROUND(COALESCE(headshot_data.headshot_count, 0) * 100.0 / damage_data.total_damage_count, 2) AS headshot_ratio,
-        RANK() OVER (ORDER BY COALESCE(headshot_data.headshot_count, 0) * 100.0 / damage_data.total_damage_count DESC) AS ranking
+            mem.MEMBER_ID,
+            mem.USERNAME,
+            COALESCE(headshot_data.headshot_count, 0) AS headshot_count,
+            damage_data.total_damage_count,
+            ROUND(COALESCE(headshot_data.headshot_count, 0) * 100.0 / damage_data.total_damage_count, 2) AS headshot_ratio,
+            RANK() OVER (ORDER BY COALESCE(headshot_data.headshot_count, 0) * 100.0 / damage_data.total_damage_count DESC) AS ranking
         FROM MEMBER mem
         JOIN (
-        -- ✅ 전체 데미지 횟수 계산 (NONSPECIFIED 제외)
-        SELECT
-        mm.MEMBER_ID,
-        COUNT(*) AS total_damage_count
-        FROM MATCH_WEAPON_DETAIL mwd
-        JOIN MEMBER_MATCH mm ON mwd.M_MCH_ID = mm.M_MCH_ID
-        WHERE mwd.DAMAGE > 0
-        AND mwd.DAMAGE_WHERE &lt;&gt; 'NONSPECIFIED'
-        GROUP BY mm.MEMBER_ID
+            SELECT
+                mm.MEMBER_ID,
+                COUNT(*) AS total_damage_count
+            FROM MATCH_WEAPON_DETAIL mwd
+            JOIN MEMBER_MATCH mm ON mwd.M_MCH_ID = mm.M_MCH_ID
+            WHERE mwd.DAMAGE > 0
+              AND mwd.DAMAGE_WHERE <![CDATA[<>]]> 'NONSPECIFIED'
+            GROUP BY mm.MEMBER_ID
         ) AS damage_data ON mem.MEMBER_ID = damage_data.MEMBER_ID
         LEFT JOIN (
-        -- ✅ HEADSHOT 횟수 계산
-        SELECT
-        mm.MEMBER_ID,
-        COUNT(*) AS headshot_count
-        FROM MATCH_WEAPON_DETAIL mwd
-        JOIN MEMBER_MATCH mm ON mwd.M_MCH_ID = mm.M_MCH_ID
-        WHERE mwd.DAMAGE > 0
-        AND mwd.DAMAGE_WHERE = 'HEADSHOT'
-        GROUP BY mm.MEMBER_ID
+            SELECT
+                mm.MEMBER_ID,
+                COUNT(*) AS headshot_count
+            FROM MATCH_WEAPON_DETAIL mwd
+            JOIN MEMBER_MATCH mm ON mwd.M_MCH_ID = mm.M_MCH_ID
+            WHERE mwd.DAMAGE > 0
+              AND mwd.DAMAGE_WHERE = 'HEADSHOT'
+            GROUP BY mm.MEMBER_ID
         ) AS headshot_data ON mem.MEMBER_ID = headshot_data.MEMBER_ID
         ORDER BY ranking;
     </select>
@@ -81,16 +72,15 @@
             COUNT(*) AS total_grenade_count,
             SUM(mwd.DAMAGE) AS total_grenade_damage,
             ROUND(SUM(mwd.DAMAGE) / NULLIF(COUNT(*), 0), 2) AS avg_damage_per_grenade,
-            -- 🔥 새로운 가중 랭킹 점수 계산 (W1=0.5, W2=0.3, W3=0.2 적용)
             ROUND(
-                    (SUM(mwd.DAMAGE) / NULLIF(COUNT(*), 0)) * 0.5 +   -- 평균 데미지 반영
-                    (LOG(1 + COUNT(*)) * 0.3) +                      -- 사용 횟수 (로그 변환)
-                    (SUM(mwd.DAMAGE) * 0.2),                         -- 총 데미지 반영
+                    (SUM(mwd.DAMAGE) / NULLIF(COUNT(*), 0)) * 0.5 +
+                    (LOG(1 + COUNT(*)) * 0.3) +
+                    (SUM(mwd.DAMAGE) * 0.2),
                     2) AS weighted_score,
             RANK() OVER (ORDER BY
         (SUM(mwd.DAMAGE) / NULLIF(COUNT(*), 0)) * 0.5 +
         (LOG(1 + COUNT(*)) * 0.3) +
-        (SUM(mwd.DAMAGE) * 0.2) DESC) AS ranking  -- 🔥 새로운 랭킹
+        (SUM(mwd.DAMAGE) * 0.2) DESC) AS ranking
         FROM MATCH_WEAPON_DETAIL mwd
                  JOIN MEMBER_MATCH mm ON mm.M_MCH_ID = mwd.M_MCH_ID
                  JOIN MEMBER m ON mm.MEMBER_ID = m.MEMBER_ID
@@ -102,15 +92,15 @@
 
     <select id="getLongDistanceRankings" resultType="com.jkky98.spubg.discord.domain.LongDistanceRanking">
         SELECT
-        m.username,
-        ROUND((SUM(mwd.DAM_DISTANCE) / COUNT(*)) / 100, 2) AS avg_hit_distance,  -- ✅ 평균 히트 거리 (100 나누기)
-        RANK() OVER (ORDER BY (SUM(mwd.DAM_DISTANCE) / COUNT(*)) DESC) AS ranking  -- ✅ 거리/히트 순으로 랭킹 매기기
+            m.username,
+            ROUND((SUM(mwd.DAM_DISTANCE) / COUNT(*)) / 100, 2) AS avg_hit_distance,
+            RANK() OVER (ORDER BY (SUM(mwd.DAM_DISTANCE) / COUNT(*)) DESC) AS ranking
         FROM MATCH_WEAPON_DETAIL mwd
-        JOIN MEMBER_MATCH mm ON mm.M_MCH_ID = mwd.M_MCH_ID
-        JOIN MEMBER m ON mm.MEMBER_ID = m.MEMBER_ID
-        JOIN MATCH mch ON mm.MATCH_ID = mch.MATCH_ID
+                JOIN MEMBER_MATCH mm ON mm.M_MCH_ID = mwd.M_MCH_ID
+                JOIN MEMBER m ON mm.MEMBER_ID = m.MEMBER_ID
+                JOIN MATCH mch ON mm.MATCH_ID = mch.MATCH_ID
         WHERE mwd.DAMAGE > 0
-        AND mwd.DAMAGE_WHERE NOT IN ('NONE', 'NONSPECIFIED')  -- ✅ NONE 및 NONSPECIFIED 제외
+            AND mwd.DAMAGE_WHERE NOT IN ('NONE', 'NONSPECIFIED')
         GROUP BY mm.MEMBER_ID, m.USERNAME
         ORDER BY ranking;
     </select>

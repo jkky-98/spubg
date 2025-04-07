@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.MemberMatch;
 import com.jkky98.spubg.pubg.request.TelemetryRequestBuilder;
 import com.jkky98.spubg.service.business.MatchWeaponDetailSyncService;
+import com.jkky98.spubg.service.implement.MemberMatchReader;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.ObjectProvider;
@@ -22,6 +23,7 @@ public class MatchWeaponDetailQueueWorker {
 
     private final MatchWeaponDetailSyncService matchWeaponDetailSyncService;
     private final ObjectProvider<TelemetryRequestBuilder> telemetryRequestBuilder;
+    private final MemberMatchReader memberMatchReader;
 
     @Async
     public void process(BlockingQueue<MemberMatch> queue, AtomicBoolean running) {
@@ -29,7 +31,7 @@ public class MatchWeaponDetailQueueWorker {
             try {
                 MemberMatch memberMatch = queue.take();
                 log.debug("[MatchWeaponDetailQueueWorker][process] 매치 공격 데이터 분석 시작 - MemberMatchId : {} ", memberMatch.getId());
-                String telemetryUrl = memberMatch.getMatch().getAssetUrl();
+                String telemetryUrl = memberMatchReader.readAssetUrl(memberMatch.getId());
 
                 TelemetryRequestBuilder telemetryRequestBuilderPrototype = telemetryRequestBuilder.getObject();
 

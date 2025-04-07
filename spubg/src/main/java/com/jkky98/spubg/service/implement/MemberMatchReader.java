@@ -30,4 +30,9 @@ public class MemberMatchReader {
     public List<MemberMatch> getMemberMatchNeedToAnaysis() {
         return memberMatchRepository.findByMatchIsAnalyzedAndSquad();
     }
+
+    public String readAssetUrl(Long memberMatchId) {
+        MemberMatch memberMatch = memberMatchRepository.findById(memberMatchId).orElseThrow(EntityNotFoundException::new);
+        return memberMatch.getMatch().getAssetUrl();
+    }
 }

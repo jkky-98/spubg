@@ -1,6 +1,8 @@
 package com.jkky98.spubg.service.processqueue;
 
 import com.jkky98.spubg.domain.MemberMatch;
+import lombok.AllArgsConstructor;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.SmartLifecycle;

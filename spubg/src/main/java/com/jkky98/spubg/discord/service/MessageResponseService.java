@@ -50,32 +50,39 @@ public class MessageResponseService {
         // USERNAME 기준 정렬
         topWeaponRankings.sort(Comparator.comparing(WeaponRanking::getUsername));
 
-        // 테이블 작성
-        StringBuilder tableBuilder = new StringBuilder("```");
-        tableBuilder.append("🏆 Weapon Performance Rankings\n\n");
-        tableBuilder.append(String.format("%-12s %-15s %-7s %-12s%n", "PLAYER", "WEAPON", "MATCH", "TOTAL SCORE"));
-        tableBuilder.append("--------------------------------------------------\n");
-
-        for (WeaponRanking ranking : topWeaponRankings) {
-            tableBuilder.append(String.format("%-12s %-15s %-7d %-12.2f%n",
-                    ranking.getUsername(),
-                    ranking.getWeaponName(),
-                    ranking.getMatch(),
-                    ranking.getTotalScore().setScale(2, RoundingMode.HALF_UP)
-            ));
-        }
-        tableBuilder.append("```");
-
-        // 설명용 Embed 메시지
         EmbedBuilder embed = new EmbedBuilder();
         embed.setTitle("🏆 Weapon Performance Rankings");
-        embed.setDescription("무기별 경기 수와 총 점수를 기반으로 플레이어를 평가합니다.");
         embed.setColor(Color.YELLOW);
         embed.setFooter("📅 최신 시즌 기준 | 제작자: jkky98", "https://img.icons8.com/?size=100&id=xqPslIlorct3&format=png&color=000000");
 
-        // 전송
+        String currentUser = "";
+        StringBuilder weaponInfo = new StringBuilder();
+
+        for (WeaponRanking ranking : topWeaponRankings) {
+            // username이 바뀌면 이전 플레이어의 필드 추가
+            if (!currentUser.isEmpty() && !ranking.getUsername().equals(currentUser)) {
+                embed.addField(currentUser, weaponInfo.toString(), false);
+                weaponInfo.setLength(0);
+            }
+            // 새로운 유저면 헤더부터 추가
+            if (!ranking.getUsername().equals(currentUser)) {
+                weaponInfo.append("`무기이름          평균데미지    평균기절 기절거리`\n");
+                currentUser = ranking.getUsername();  // 여기서 바꿔줘야 header 중복 방지됨
+            }
+
+            weaponInfo.append(String.format("`%-15s %-10d %-6.2f %-6s`%n",
+                    ranking.getWeaponName(),
+                    ranking.getAvgDamage(),
+                    ranking.getAvgGroggy().setScale(2, RoundingMode.HALF_UP),
+                    ranking.getAvgGroggyDistance()
+            ));
+        }
+        // 마지막 플레이어 추가
+        if (!currentUser.equals("")) {
+            embed.addField(currentUser, weaponInfo.toString(), false);
+        }
+
         event.getChannel().sendMessageEmbeds(embed.build()).queue();
-        event.getChannel().sendMessage(tableBuilder.toString()).queue();
     }
 
 
@@ -85,10 +92,6 @@ public class MessageResponseService {
             return;
         }
 
-        // ✅ USERNAME 기준으로 정렬
-        headshotRankings.sort(Comparator.comparing(HeadshotRanking::getUsername));
-
-        // 🔥 헤드샷 랭킹 테이블을 StringBuilder로 구성
         StringBuilder tableBuilder = new StringBuilder("```");
         tableBuilder.append("🎯 **Headshot Performance Rankings** 🎯\n");
         tableBuilder.append("Top players ranked by headshot performance.\n\n");
@@ -127,10 +130,8 @@ public class MessageResponseService {
             return;
         }
 
-        // ✅ weightedScore 기준으로 정렬 (수류탄 가중 랭킹 적용)
         grenadeRankings.sort(Comparator.comparing(GrenadeRanking::getWeightedScore).reversed());
 
-        // 🔥 랭킹 테이블을 StringBuilder로 구성
         StringBuilder tableBuilder = new StringBuilder("```");
         tableBuilder.append("🔥 **Grenade Performance Rankings** 🔥\n");
         tableBuilder.append("Top players ranked by grenade performance (weighted score).\n\n");
@@ -243,10 +244,8 @@ public class MessageResponseService {
             return;
         }
 
-        // ✅ 랭킹 기준으로 내림차순 정렬
         lotOfFireRankings.sort(Comparator.comparingInt(LotOfFireRanking::getRanking));
 
-        // 🔥 랭킹 테이블을 StringBuilder로 구성
         StringBuilder tableBuilder = new StringBuilder("```");
         tableBuilder.append("🔥 **Lot of Fire Rankings** 🔥\n");
         tableBuilder.append("Top players ranked by total fire usage.\n\n");
@@ -291,7 +290,6 @@ public class MessageResponseService {
             ranking.setRanking(rankCounter++);
         }
 
-        // 🚀 테이블 문자열 구성 (코드 블록 내에 출력)
         StringBuilder tableBuilder = new StringBuilder("```");
         tableBuilder.append("🚀 **Phase Dealt Rankings** 🚀\n");
         tableBuilder.append("Ranked by AVG DEALT / WEIGHT DAMAGE ratio.\n\n");
@@ -332,10 +330,8 @@ public class MessageResponseService {
             return;
         }
 
-        // ✅ 랭킹 기준으로 정렬 (낮은 순위 번호가 상위)
         clutchDealtRankings.sort(Comparator.comparingInt(ClutchDealtRanking::getRanking));
 
-        // 💥 클러치 딜 랭킹 테이블 문자열 구성 (코드 블록 내 출력)
         StringBuilder tableBuilder = new StringBuilder("```");
         tableBuilder.append("💥 **Clutch Dealt Rankings** 💥\n");
         tableBuilder.append("Top players ranked by clutch dealt performance.\n\n");
@@ -375,10 +371,8 @@ public class MessageResponseService {
             return;
         }
 
-        // ✅ 랭킹 기준으로 정렬 (낮은 순위 번호가 상위)
         groggyRankings.sort(Comparator.comparingInt(GroggyRanking::getRanking));
 
-        // 💥 그로기 랭킹 테이블 문자열 구성 (코드 블록 내 출력)
         StringBuilder tableBuilder = new StringBuilder("```");
         tableBuilder.append("💥 **Groggy Rankings** 💥\n");
         tableBuilder.append("Top players ranked by groggy performance.\n\n");
@@ -415,10 +409,8 @@ public class MessageResponseService {
             return;
         }
 
-        // ✅ 랭킹 기준 정렬
         smokeRankings.sort(Comparator.comparingInt(SmokeRanking::getRanking));
 
-        // 🌫 Smoke 랭킹 테이블 문자열 구성
         StringBuilder tableBuilder = new StringBuilder("```");
         tableBuilder.append("🌫 **Smoke Usage Rankings** 🌫\n");
         tableBuilder.append("Top players ranked by smoke usage per match.\n\n");

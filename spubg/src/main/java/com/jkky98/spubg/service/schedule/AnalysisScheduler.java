@@ -49,7 +49,7 @@ public class AnalysisScheduler {
         }
 
         memberMatchNeedToAnaysis.forEach(matchWeaponDetailProcessingQueue::addMemberMatch);
-        log.debug("[AnalysisScheduler][fetchProcessMatchWeaponDetail] 작업 추가 :: {}개의 매치가 작업큐에 추가되었습니다.", memberMatchNeedToAnaysis.size());
+        log.debug("[AnalysisScheduler][fetchProcessMatchWeaponDetail] 작업 추가 :: {}개의 분석이 필요한 멤버-매치가 작업큐에 추가되었습니다.", memberMatchNeedToAnaysis.size());
     }
 
     @Scheduled(fixedRate = 60000 * 10)
