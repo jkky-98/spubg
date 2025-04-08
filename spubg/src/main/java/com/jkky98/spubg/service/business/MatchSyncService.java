@@ -3,6 +3,7 @@ package com.jkky98.spubg.service.business;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.GameMode;
 import com.jkky98.spubg.domain.Match;
+import com.jkky98.spubg.domain.Season;
 import com.jkky98.spubg.pubg.enums.GameMap;
 import com.jkky98.spubg.service.business.exception.MatchSyncValidationException;
 import com.jkky98.spubg.service.implement.*;
@@ -23,6 +24,7 @@ public class MatchSyncService {
 
     private final MatchReader matchReader;
     private final MemberMatchSyncService memberMatchSyncService;
+    private final SeasonReader seasonReader;
 
     /**
      * 매치 데이터를 통해 멤버-매치 데이터 추가 및 누락 매치 데이터 보완
@@ -41,15 +43,15 @@ public class MatchSyncService {
              *  등록된 멤버에 대해 매치 데이터 안에 멤버들 누락 존재할 경우 멤버-매치에 추가
              */
             memberMatchSyncService.syncMemberMatchIfMissing(rootNode, matchRead);
-
-            syncMatch(rootNode, matchRead);
+            Season currentSeason = seasonReader.readCurrentSeason();
+            syncMatch(rootNode, matchRead, currentSeason.getSeasonApiId());
         } catch (MatchSyncValidationException e) {
             log.warn(e.getMessage());
             garbageSyncMatch(matchRead);
         }
     }
 
-    private static void syncMatch(JsonNode rootNode, Match matchRead) {
+    private static void syncMatch(JsonNode rootNode, Match matchRead, String currentSeasonId) {
         JsonNode attNode = rootNode.path("data").path("attributes");
 
         String mapName = GameMap.getDisplayName(getMapNameFromAttNode(attNode));
@@ -62,18 +64,20 @@ public class MatchSyncService {
                 mapName,
                 assetId,
                 assetURL,
-                createdAt
+                createdAt,
+                currentSeasonId
         );
         log.debug("[MatchSyncService][sync][syncMatch] 정상적으로 매치 정보가 업데이트 되었습니다. : 분석이 필요한 매치");
     }
 
-    private static void updateEntity(Match matchRead, String mapName, String assetId, String assetURL, LocalDateTime createdAt) {
+    private static void updateEntity(Match matchRead, String mapName, String assetId, String assetURL, LocalDateTime createdAt, String currentSeasonId) {
         matchRead.setBoolIsAnalysis(true);
         matchRead.setMap(mapName);
         matchRead.setAssetId(assetId);
         matchRead.setAssetUrl(assetURL);
         matchRead.setCreatedAt(createdAt);
         matchRead.setGameMode(GameMode.SQUAD);
+        matchRead.setSeason(currentSeasonId);
     }
 
     private static String getAssetId(JsonNode rootNode) {

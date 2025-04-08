@@ -8,6 +8,4 @@ import java.util.Optional;
 public interface SeasonRepository extends JpaRepository<Season, Long> {
 
     Optional<Season> findByBoolIsCurrentSeasonTrue();
-
-    Optional<Season> findBySeasonApiId(String seasonApiId);
 }

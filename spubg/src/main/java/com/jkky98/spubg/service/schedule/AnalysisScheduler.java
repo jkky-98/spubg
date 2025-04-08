@@ -2,6 +2,7 @@ package com.jkky98.spubg.service.schedule;
 
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.MemberMatch;
+import com.jkky98.spubg.service.SeasonService;
 import com.jkky98.spubg.service.implement.MatchReader;
 import com.jkky98.spubg.service.implement.MemberMatchReader;
 import com.jkky98.spubg.service.processqueue.MatchProcessingQueue;
@@ -23,6 +24,7 @@ public class AnalysisScheduler {
     private final MemberService memberService;
     private final MatchReader matchReader;
     private final MemberMatchReader memberMatchReader;
+    private final SeasonService seasonService;
 
     @Scheduled(fixedRate = 60000 * 10)
     public void fetchProcessMatches() {
@@ -56,6 +58,12 @@ public class AnalysisScheduler {
     public void fetchProcessMember() {
         log.debug("[AnalysisScheduler][fetchProcessMember] 스케줄링 시작");
         memberService.fetchMember();
+    }
+
+    @Scheduled(cron = "0 14 9 * * *")
+    public void fetchSeason() {
+        log.debug("[AnalysisScheduler][fetchSeason] 스케줄링 시작");
+        seasonService.updateSeason();
     }
 }
 

@@ -47,11 +47,11 @@ public class MessageResponseService {
             return;
         }
 
-        // USERNAME 기준 정렬
         topWeaponRankings.sort(Comparator.comparing(WeaponRanking::getUsername));
 
         EmbedBuilder embed = new EmbedBuilder();
         embed.setTitle("🏆 Weapon Performance Rankings");
+        embed.setDescription("플레이어들의 가장 자주 사용하는 주무기 2개에 대한 정보(평균 딜량, 평균 기절수, 기절시킬 시 평균 거리)를 제공합니다.");
         embed.setColor(Color.YELLOW);
         embed.setFooter("📅 최신 시즌 기준 | 제작자: jkky98", "https://img.icons8.com/?size=100&id=xqPslIlorct3&format=png&color=000000");
 
@@ -74,7 +74,7 @@ public class MessageResponseService {
                     ranking.getWeaponName(),
                     ranking.getAvgDamage(),
                     ranking.getAvgGroggy().setScale(2, RoundingMode.HALF_UP),
-                    ranking.getAvgGroggyDistance()
+                    ranking.getAvgGroggyDistance() + "m"
             ));
         }
         // 마지막 플레이어 추가

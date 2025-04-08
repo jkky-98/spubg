@@ -1,5 +1,6 @@
 package com.jkky98.spubg.domain;
 
+import com.jkky98.spubg.domain.base.BaseTimeEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -11,7 +12,7 @@ import lombok.*;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-public class Season {
+public class Season extends BaseTimeEntity {
 
     @Id
     @GeneratedValue

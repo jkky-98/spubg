@@ -2,10 +2,8 @@ package com.jkky98.spubg.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.Season;
-import com.jkky98.spubg.pubg.request.PubgApiManager;
 import com.jkky98.spubg.pubg.request.PubgApiRequestService;
 import com.jkky98.spubg.repository.SeasonRepository;
-import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -29,7 +27,7 @@ public class SeasonService {
             boolean isOffseason = seasonNode.get("attributes").get("isOffseason").asBoolean();
             String seasonId = seasonNode.get("id").asText();
 
-            if (isCurrent) {  // 🔹 현재 시즌인 경우만 저장
+            if (isCurrent) {
                 Season seasonNew = Season.builder()
                         .seasonApiId(seasonId)
                         .boolIsCurrentSeason(true)
@@ -37,22 +35,15 @@ public class SeasonService {
                         .build();
 
                 // 현재 시즌과 DB 시즌 비교
-                Season seasonOld = seasonRepository.findByBoolIsCurrentSeasonTrue().orElseThrow(EntityNotFoundException::new);
+                Season seasonOld = seasonRepository.findByBoolIsCurrentSeasonTrue().orElseGet(() -> seasonRepository.save(seasonNew));
 
                 if (seasonOld.getSeasonApiId().equals(seasonNew.getSeasonApiId())) {
                     return;
                 } else {
-                    seasonRepository.delete(seasonOld);
+                    seasonOld.updateBoolIsCurrentSeason();
                     seasonRepository.save(seasonNew);
                 }
-            } else {
-                return;
             }
         }
-    }
-
-    @Transactional(readOnly = true)
-    public String getCurrentSeasonId() {
-        return seasonRepository.findByBoolIsCurrentSeasonTrue().orElseThrow(EntityNotFoundException::new).getSeasonApiId();
     }
 }
