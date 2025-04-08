@@ -1,5 +1,8 @@
 package com.jkky98.spubg.domain;
 
+import com.jkky98.spubg.pubg.enums.DamageWhere;
+import com.jkky98.spubg.pubg.enums.WeaponName;
+import com.jkky98.spubg.pubg.enums.WeaponType;
 import jakarta.persistence.*;
 import lombok.*;
 

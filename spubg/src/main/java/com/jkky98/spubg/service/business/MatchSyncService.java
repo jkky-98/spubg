@@ -1,7 +1,7 @@
 package com.jkky98.spubg.service.business;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.jkky98.spubg.domain.GameMode;
+import com.jkky98.spubg.pubg.enums.GameMode;
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.Season;
 import com.jkky98.spubg.pubg.enums.GameMap;

@@ -1,0 +1,57 @@
+[
+  {
+    "_T": "LogPlayerAttack",
+    "attackId": "attack123",
+    "weapon": {
+      "itemId": "weapon1"
+    },
+    "_D": "2025-04-08T12:00:00Z",
+    "attacker": {
+      "accountId": "account123",
+      "health": 100,
+      "isInVehicle": false,
+      "location": {
+        "x": 10.0,
+        "y": 20.0,
+        "z": 30.0
+      }
+    },
+    "common": {
+      "isGame": 1
+    }
+  },
+  {
+
+  },
+  {
+    "_T": "LogPlayerTakeDamage",
+    "attackId": "attack123",
+    "damage": 50.0,
+    "damageCauserName": "weapon1",
+    "damageReason": "head",
+    "attacker": {
+      "accountId": "account123"
+    },
+    "victim": {
+      "location": {
+        "x": 100.0,
+        "y": 200.0,
+        "z": 300.0
+      }
+    }
+  },
+  {
+    "_T": "LogPlayerMakeGroggy",
+    "attackId": "attack123",
+    "attacker": {
+      "accountId": "account123"
+    }
+  },
+  {
+    "_T": "LogPlayerMakeGroggy",
+    "attackId": "attack123",
+    "attacker": {
+      "accountId": "account123"
+    }
+  }
+]

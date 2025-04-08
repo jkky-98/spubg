@@ -2,7 +2,7 @@ package com.jkky98.spubg.service.business;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.jkky98.spubg.domain.GameMode;
+import com.jkky98.spubg.pubg.enums.GameMode;
 import com.jkky98.spubg.domain.Match;
 import com.jkky98.spubg.domain.Season;
 import com.jkky98.spubg.service.implement.MatchReader;
@@ -45,7 +45,7 @@ public class MatchSyncServiceTest {
     @DisplayName("[MatchSyncService][sync] 성공 테스트")
     void syncSuccess() throws IOException {
         // given
-        InputStream resourceAsStream = getClass().getResourceAsStream("/mock/match_response.json");
+        InputStream resourceAsStream = getClass().getResourceAsStream("/matchsync/match_response.json");
         JsonNode rootNode = objectMapper.readTree(resourceAsStream);
 
         Match matchRead = Match.builder()
@@ -84,80 +84,80 @@ public class MatchSyncServiceTest {
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - 에러 결과를 담은 json이 반환될 경우")
     void syncFailErrorNode() throws IOException {
         //given
-        failTestLogic("/mock/match_response_not_found.json");
+        failTestLogic("/matchsync/match_response_not_found.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - dataNode 없을경우")
     void syncFailDataNode() throws IOException {
         //given
-        failTestLogic("/mock/match_response_no_datanode.json");
+        failTestLogic("/matchsync/match_response_no_datanode.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - 올바른 type이 아닐 경우")
     void syncFailTypeFail() throws IOException {
-        failTestLogic("/mock/match_response_type_fail.json");
+        failTestLogic("/matchsync/match_response_type_fail.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - attributes 노드 존재하지 않을 경우")
     void syncFailAttributesFail() throws IOException {
-        failTestLogic("/mock/match_response_attributes_fail.json");
+        failTestLogic("/matchsync/match_response_attributes_fail.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - 커스텀 매치일 경우")
     void syncFailIsCustomMatch() throws IOException {
-        failTestLogic("/mock/match_response_custom_match.json");
+        failTestLogic("/matchsync/match_response_custom_match.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - 오피셜 타입 매치가 아닐 경우")
     void syncFailNotOfficial() throws IOException {
-        failTestLogic("/mock/match_response_not_official.json");
+        failTestLogic("/matchsync/match_response_not_official.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - 스쿼드 게임모드가 아닐 경우")
     void syncFailNotSquad() throws IOException {
-        failTestLogic("/mock/match_response_not_squad.json");
+        failTestLogic("/matchsync/match_response_not_squad.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - included노드가 존재하지 않을 경우")
     void syncFailNoIncludedNode() throws IOException {
-        failTestLogic("/mock/match_response_no_included.json");
+        failTestLogic("/matchsync/match_response_no_included.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - mapName 노드가 존재하지 않을 경우")
     void syncFailNoMapName() throws IOException {
-        failTestLogicAfterValid("/mock/match_response_no_mapName.json");
+        failTestLogicAfterValid("/matchsync/match_response_no_mapName.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - createAt 노드가 존재하지 않을 경우")
     void syncFailNoCreated() throws IOException {
-        failTestLogicAfterValid("/mock/match_response_no_created.json");
+        failTestLogicAfterValid("/matchsync/match_response_no_created.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - createAt 형식이 이상할 경우")
     void syncFailCreatedSyntexException() throws IOException {
-        failTestLogicAfterValid("/mock/match_response_wrong_created.json");
+        failTestLogicAfterValid("/matchsync/match_response_wrong_created.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - AssetId가 존재하지 않을 경우")
     void syncFailNoAssetId() throws IOException {
-        failTestLogicAfterValid("/mock/match_response_no_assetId.json");
+        failTestLogicAfterValid("/matchsync/match_response_no_assetId.json");
     }
 
     @Test
     @DisplayName("[MatchSyncService][sync] validMatchSync 필터링 테스트 - AssetURL가 존재하지 않을 경우")
     void syncFailNoAssetURL() throws IOException {
-        failTestLogicAfterValid("/mock/match_response_no_assetUrl.json");
+        failTestLogicAfterValid("/matchsync/match_response_no_assetUrl.json");
     }
 
     private void failTestLogicAfterValid(String testJsonPath) throws IOException {

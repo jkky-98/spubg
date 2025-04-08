@@ -1,5 +1,6 @@
 package com.jkky98.spubg.domain;
 
+import com.jkky98.spubg.pubg.enums.GameMode;
 import jakarta.persistence.*;
 import lombok.*;
 

@@ -2,6 +2,9 @@ package com.jkky98.spubg.service.business;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jkky98.spubg.domain.*;
+import com.jkky98.spubg.pubg.enums.DamageWhere;
+import com.jkky98.spubg.pubg.enums.WeaponName;
+import com.jkky98.spubg.pubg.enums.WeaponType;
 import com.jkky98.spubg.service.implement.MatchWeaponDetailWriter;
 import com.jkky98.spubg.service.implement.MemberMatchReader;
 import lombok.Data;
@@ -98,24 +101,24 @@ public class MatchWeaponDetailSyncService {
             if (!eventNode.has("_T")) {
                 continue;
             }
-            String eventType = eventNode.get("_T").asText();
+            String eventType = eventNode.path("_T").asText();
 
             // attacker가 있고 accountId가 일치하는지 체크
             if (eventNode.has("attacker")
-                    && eventNode.get("attacker").has("accountId")
-                    && eventNode.get("attacker").get("accountId").asText().equals(accountId)) {
+                    && eventNode.path("attacker").has("accountId")
+                    && eventNode.path("attacker").path("accountId").asText().equals(accountId)) {
 
                 // 각 이벤트 유형에 따라 분류
                 if (LOG_PLAYER_ATTACK.getEventName().equals(eventType)) {
                     attackEvents.add(eventNode);
                 } else if (LOG_PLAYER_TAKE_DAMAGE.getEventName().equals(eventType)) {
                     // 유효한 attackId 체크
-                    if (eventNode.has("attackId") && !"-1".equals(eventNode.get("attackId").asText())) {
+                    if (eventNode.has("attackId") && !"-1".equals(eventNode.path("attackId").asText())) {
                         damageEvents.add(eventNode);
                     }
                 } else if (LOG_PLAYER_MAKE_GROGGY.getEventName().equals(eventType)) {
                     // 유효한 attackId 체크
-                    if (eventNode.has("attackId") && !"-1".equals(eventNode.get("attackId").asText())) {
+                    if (eventNode.has("attackId") && !"-1".equals(eventNode.path("attackId").asText())) {
                         groggyEvents.add(eventNode);
                     }
                 }
@@ -138,25 +141,25 @@ public class MatchWeaponDetailSyncService {
         // groggyNodes를 미리 attackId를 키로 하는 Map으로 변환
         Map<String, JsonNode> groggyMap = groggyNodes.stream()
                 .collect(Collectors.toMap(
-                        node -> node.get("attackId").asText(),
+                        node -> node.path("attackId").asText(),
                         node -> node,
                         (n1, n2) -> n1)); // 중복 키가 발생하면 첫 번째 값을 사용
 
         // attackNodes를 순회하며 초기 WeaponHistory Map 생성
         Map<String, WeaponHistory> weaponHistoryMap = attackNodes.stream()
                 .collect(Collectors.toMap(
-                        node -> node.get("attackId").asText(),
+                        node -> node.path("attackId").asText(),
                         node -> {
-                            String itemId = node.get("weapon").get("itemId").asText();
-                            LocalDateTime createdAt = Instant.parse(node.get("_D").asText())
+                            String itemId = node.path("weapon").path("itemId").asText();
+                            LocalDateTime createdAt = Instant.parse(node.path("_D").asText())
                                     .atZone(ZoneId.of("Asia/Seoul"))
                                     .toLocalDateTime();
-                            BigDecimal attackerHealth = BigDecimal.valueOf(node.get("attacker").get("health").asDouble());
-                            boolean attackerIsInVehicle = node.get("attacker").get("isInVehicle").asBoolean();
-                            BigDecimal phase = BigDecimal.valueOf(node.get("common").get("isGame").asDouble());
-                            BigDecimal attX = BigDecimal.valueOf(node.get("attacker").get("location").get("x").asDouble());
-                            BigDecimal attY = BigDecimal.valueOf(node.get("attacker").get("location").get("y").asDouble());
-                            BigDecimal attZ = BigDecimal.valueOf(node.get("attacker").get("location").get("z").asDouble());
+                            BigDecimal attackerHealth = BigDecimal.valueOf(node.path("attacker").path("health").asDouble());
+                            boolean attackerIsInVehicle = node.path("attacker").path("isInVehicle").asBoolean();
+                            BigDecimal phase = BigDecimal.valueOf(node.path("common").path("isGame").asDouble());
+                            BigDecimal attX = BigDecimal.valueOf(node.path("attacker").path("location").path("x").asDouble());
+                            BigDecimal attY = BigDecimal.valueOf(node.path("attacker").path("location").path("y").asDouble());
+                            BigDecimal attZ = BigDecimal.valueOf(node.path("attacker").path("location").path("z").asDouble());
 
                             return new WeaponHistory(
                                     WeaponName.fromKey(itemId),
@@ -171,40 +174,36 @@ public class MatchWeaponDetailSyncService {
 
         // damageNodes를 순회하면서 WeaponHistory 업데이트
         damageNodes.forEach(damageNode -> {
-            try {
-                String attackId = damageNode.get("attackId").asText();
-                WeaponHistory weaponHistory = weaponHistoryMap.get(attackId);
-                if (weaponHistory != null) {
-                    // 데미지 기록 설정
-                    weaponHistory.setDamage(BigDecimal.valueOf(damageNode.get("damage").asDouble()));
-                    // 무기 이름 설정
-                    weaponHistory.setWeaponName(WeaponName.fromKey(damageNode.get("damageCauserName").asText()));
-                    // 맞은 부위 설정
-                    weaponHistory.setDamageWhere(DamageWhere.fromkey(damageNode.get("damageReason").asText()));
-                    // 무기 카테고리 설정
-                    weaponHistory.setWeaponType(WeaponType.getWeaponType(weaponHistory.getWeaponName()));
+            String attackId = damageNode.path("attackId").asText();
+            WeaponHistory weaponHistory = weaponHistoryMap.get(attackId);
+            if (weaponHistory != null) {
+                // 데미지 기록 설정
+                weaponHistory.setDamage(BigDecimal.valueOf(damageNode.path("damage").asDouble()));
+                // 무기 이름 설정
+                weaponHistory.setWeaponName(WeaponName.fromKey(damageNode.path("damageCauserName").asText()));
+                // 맞은 부위 설정
+                weaponHistory.setDamageWhere(DamageWhere.fromkey(damageNode.path("damageReason").asText()));
+                // 무기 카테고리 설정
+                weaponHistory.setWeaponType(WeaponType.getWeaponType(weaponHistory.getWeaponName()));
 
-                    // 맞은 위치 정보 읽기
-                    BigDecimal damX = BigDecimal.valueOf(damageNode.get("victim").get("location").get("x").asDouble());
-                    BigDecimal damY = BigDecimal.valueOf(damageNode.get("victim").get("location").get("y").asDouble());
-                    BigDecimal damZ = BigDecimal.valueOf(damageNode.get("victim").get("location").get("z").asDouble());
-                    // 거리 계산 (calculateDistance는 기존 메서드)
-                    BigDecimal distance = calculateDistance(
-                            weaponHistory.getAttX(),
-                            weaponHistory.getAttY(),
-                            weaponHistory.getAttZ(),
-                            damX,
-                            damY,
-                            damZ);
-                    weaponHistory.setDamDistance(distance);
+                // 맞은 위치 정보 읽기
+                BigDecimal damX = BigDecimal.valueOf(damageNode.path("victim").path("location").path("x").asDouble());
+                BigDecimal damY = BigDecimal.valueOf(damageNode.path("victim").path("location").path("y").asDouble());
+                BigDecimal damZ = BigDecimal.valueOf(damageNode.path("victim").path("location").path("z").asDouble());
+                // 거리 계산 (calculateDistance는 기존 메서드)
+                BigDecimal distance = calculateDistance(
+                        weaponHistory.getAttX(),
+                        weaponHistory.getAttY(),
+                        weaponHistory.getAttZ(),
+                        damX,
+                        damY,
+                        damZ);
+                weaponHistory.setDamDistance(distance);
 
-                    // 해당 attackId에 해당하는 groggy 이벤트가 있는 경우 기절 여부 설정
-                    if (groggyMap.containsKey(attackId)) {
-                        weaponHistory.setGroggy(true);
-                    }
+                // 해당 attackId에 해당하는 groggy 이벤트가 있는 경우 기절 여부 설정
+                if (groggyMap.containsKey(attackId)) {
+                    weaponHistory.setGroggy(true);
                 }
-            } catch (Exception e) {
-                log.error(e.getMessage(), e);
             }
         });
 

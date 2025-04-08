@@ -1,4 +1,4 @@
-package com.jkky98.spubg.domain;
+package com.jkky98.spubg.pubg.enums;
 
 import java.util.HashMap;
 import java.util.Map;
