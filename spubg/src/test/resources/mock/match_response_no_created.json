@@ -1,0 +1,31 @@
+{
+  "data": {
+    "type": "match",
+    "attributes": {
+      "duration": 1800,
+      "mapName": "Erangel_Main",
+      "isCustomMatch": false,
+      "matchType": "official",
+      "gameMode": "squad"
+    },
+    "relationships": {
+      "assets": {
+        "data": [
+          {
+            "type": "asset",
+            "id": "asset123"
+          }
+        ]
+      }
+    }
+  },
+  "included": [
+    {
+      "type": "asset",
+      "id": "asset123",
+      "attributes": {
+        "URL": "https://example.com/assets/asset123.jpg"
+      }
+    }
+  ]
+}

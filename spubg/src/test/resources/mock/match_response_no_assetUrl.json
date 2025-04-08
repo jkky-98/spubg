@@ -1,21 +1,20 @@
 {
   "data": {
     "type": "match",
-    "id": "nonSquadMatch",
     "attributes": {
-      "createdAt": "2025-03-28T03:00:00Z",
+      "createdAt": "2025-04-08T12:00:00Z",
       "duration": 1800,
-      "gameMode": "solo",
+      "mapName": "Erangel_Main",
       "isCustomMatch": false,
       "matchType": "official",
-      "mapName": "Baltic_Main"
+      "gameMode": "squad"
     },
     "relationships": {
       "assets": {
         "data": [
           {
             "type": "asset",
-            "id": "asset-id-5678"
+            "id": "asset123"
           }
         ]
       }
@@ -24,9 +23,9 @@
   "included": [
     {
       "type": "asset",
-      "id": "asset-id-5678",
+      "id": "asset123",
       "attributes": {
-        "URL": "https://telemetry-cdn.playbattlegrounds.com/sample-asset-solo.json"
+        "URL": ""
       }
     }
   ]

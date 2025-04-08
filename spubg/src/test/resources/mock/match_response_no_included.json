@@ -1,0 +1,10 @@
+{
+  "data": {
+    "type": "match",
+    "attributes": {
+      "isCustomMatch": false,
+      "matchType": "official",
+      "gameMode": "squad"
+    }
+  }
+}

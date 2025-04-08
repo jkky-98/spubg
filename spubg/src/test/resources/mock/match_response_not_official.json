@@ -1,0 +1,9 @@
+{
+  "data": {
+    "type": "match",
+    "attributes": {
+      "isCustomMatch": false,
+      "matchType": "not-official"
+    }
+  }
+}

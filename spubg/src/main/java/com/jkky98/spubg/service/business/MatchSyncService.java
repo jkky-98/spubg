@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
 @Service
@@ -81,18 +82,18 @@ public class MatchSyncService {
     }
 
     private static String getAssetId(JsonNode rootNode) {
-        JsonNode assetsArrayNode = rootNode.path("data").path("relationships").path("assets").path("data");
+        JsonNode assetsArrayNode = rootNode.path("data")
+                .path("relationships")
+                .path("assets")
+                .path("data");
 
         if (assetsArrayNode.isArray() && !assetsArrayNode.isEmpty()) {
             for (JsonNode assetNode : assetsArrayNode) {
-                if (assetNode.path("type").asText().equals("asset")) {
+                if ("asset".equals(assetNode.path("type").asText())) {
                     String assetId = assetNode.path("id").asText();
-
-                    if (assetId.isEmpty()) {
-                        fail("type : assetId가 비어있습니다. 추출할 수 없습니다.");
+                    if (!assetId.isEmpty()) {
+                        return assetId;
                     }
-
-                    return assetId;
                 }
             }
         }
@@ -100,38 +101,43 @@ public class MatchSyncService {
         throw new MatchSyncValidationException("assetId를 찾을 수 없습니다.");
     }
 
+
     private static String getAssetURL(JsonNode rootNode, String assetId) {
-        for (JsonNode includedNode : rootNode.path("included")) {
-            if (includedNode.path("type").asText().equals("asset")
-                && includedNode.path("id").asText().equals(assetId)) {
-                String returnUrl = includedNode.path("attributes").path("URL").asText();
-
-                if (returnUrl.isEmpty()) {
-                    fail("assetUrl이 존재하지 않습니다.");
+        JsonNode includedNodes = rootNode.path("included");
+        if (includedNodes.isArray()) {
+            for (JsonNode node : includedNodes) {
+                if ("asset".equals(node.path("type").asText())
+                        && assetId.equals(node.path("id").asText())) {
+                    String assetUrl = node.path("attributes").path("URL").asText();
+                    if (!assetUrl.isEmpty()) {
+                        return assetUrl;
+                    }
                 }
-
-                return returnUrl;
             }
         }
         throw new MatchSyncValidationException("assetUrl이 존재하지 않습니다.");
     }
 
     private static LocalDateTime getCreatedAt(JsonNode attNode) {
-        String createdAtString = attNode.path("createdAt").asText();
-        
-        if (createdAtString.isEmpty()) {
-            fail("created이 attNode에 존재하지 않습니다.");
-        }
+        String createdAtString = Optional.ofNullable(attNode.get("createdAt"))
+                .map(JsonNode::asText)
+                .map(String::trim)
+                .filter(s -> !s.isEmpty())
+                .orElseThrow(() -> new MatchSyncValidationException("createdAt 필드가 없거나 비어있습니다."));
 
-        return Instant.parse(createdAtString)
-                .atZone(ZoneId.of("Asia/Seoul"))
-                .toLocalDateTime();
+        try {
+            return Instant.parse(createdAtString)
+                    .atZone(ZoneId.of("Asia/Seoul"))
+                    .toLocalDateTime();
+        } catch (DateTimeParseException e) {
+            throw new MatchSyncValidationException("createdAt의 형식이 올바르지 않습니다.");
+        }
     }
 
     private static String getMapNameFromAttNode(JsonNode attNode) {
         String mapNameRaw = attNode.path("mapName").asText();
         if (mapNameRaw.isEmpty()) {
-            fail("mapName이 attNode에 존재하지 않습니다.");
+            throw new MatchSyncValidationException("mapName이 attNode에 존재하지 않습니다.");
         }
         return mapNameRaw;
     }
@@ -140,47 +146,43 @@ public class MatchSyncService {
         JsonNode dataNode = rootNode.path("data");
 
         if (dataNode.isMissingNode()) {
-            String errorDetail = Optional.of(dataNode)
-                    .map(n -> n.path("error"))
-                    .filter(n -> !n.isMissingNode())
-                    .map(n -> n.path("detail").asText())
-                    .orElse(null);
+            // 최상위 errors 배열을 직접 확인
+            JsonNode errorsNode = rootNode.path("errors");
+            String errorDetail = null;
+            if (errorsNode.isArray() && !errorsNode.isEmpty()) {
+                errorDetail = errorsNode.get(0).path("detail").asText(null);
+            }
 
-            fail(errorDetail != null
+            throw new MatchSyncValidationException(errorDetail != null
                     ? "매치 json 데이터를 읽을 수 없습니다. error Detail : " + errorDetail
                     : "매치 json 데이터를 읽을 수 없습니다.");
         }
 
         if (!"match".equals(dataNode.path("type").asText())) {
-            fail("서버에서 정의한 올바른 매치 타입이 아닙니다.");
+            throw new MatchSyncValidationException("서버에서 정의한 올바른 매치 타입이 아닙니다.");
         }
 
         JsonNode attNode = dataNode.path("attributes");
 
         if (attNode.isMissingNode()) {
-            fail("data노드는 존재하지만, attributes 노드가 존재하지 않습니다.");
+            throw new MatchSyncValidationException("data노드는 존재하지만, attributes 노드가 존재하지 않습니다.");
         }
 
         if (attNode.path("isCustomMatch").asBoolean()) {
-            fail("이 매치는 커스텀 매치이므로 분석 대상이 아닙니다.");
+            throw new MatchSyncValidationException("이 매치는 커스텀 매치이므로 분석 대상이 아닙니다.");
         }
 
         if (!"official".equals(attNode.path("matchType").asText())) {
-            fail("오피셜 타입의 매치가 아니므로 분석 대상이 아닙니다.");
+            throw new MatchSyncValidationException("오피셜 타입의 매치가 아니므로 분석 대상이 아닙니다.");
         }
 
         if (!"squad".equals(attNode.path("gameMode").asText())) {
-            fail("게임 모드가 스쿼드가 아니므로 분석 대상이 아닙니다.");
+            throw new MatchSyncValidationException("게임 모드가 스쿼드가 아니므로 분석 대상이 아닙니다.");
         }
 
         if (rootNode.path("included").isMissingNode()) {
-            fail("included 노드가 존재하지 않습니다.");
+            throw new MatchSyncValidationException("included 노드가 존재하지 않습니다.");
         }
-    }
-
-    private static void fail(String message) {
-        // 실패시 예외 던짐
-        throw new MatchSyncValidationException(message);
     }
 
     private static void garbageSyncMatch(Match matchRead) {
