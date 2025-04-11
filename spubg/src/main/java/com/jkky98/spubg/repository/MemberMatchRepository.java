@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface MemberMatchRepository extends JpaRepository<MemberMatch, Long> {
 
-    @Query("select m from MemberMatch m where m.match.boolIsAnalysis = true AND m.match.gameMode = com.jkky98.spubg.domain.GameMode.SQUAD AND m.boolIsAnalysis = false")
+    @Query("select m from MemberMatch m where m.match.boolIsAnalysis = true AND m.match.gameMode = com.jkky98.spubg.pubg.enums.GameMode.SQUAD AND m.boolIsAnalysis = false")
     List<MemberMatch> findByMatchIsAnalyzedAndSquad();
 
     Optional<MemberMatch> findByMemberAndMatch(Member member, Match match);

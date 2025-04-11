@@ -54,7 +54,7 @@ public class MemberMatchSyncService {
                                                     .build();
 
                                             MemberMatch savedNewMemberMatch = memberMatchWriter.save(memberMatchNew);
-                                            log.info("매치 ID : {}에 누락된 Member가 존재합니다. MemberMatch를 추가합니다. : {}", matchRead.getId(), m.getId());
+                                            log.info("매치 ID : {}에 누락된 Member가 존재합니다. MemberMatch를 추가합니다. : {}", matchRead.getId(), savedNewMemberMatch.getId());
                                             return savedNewMemberMatch;
                                         });
                             });
