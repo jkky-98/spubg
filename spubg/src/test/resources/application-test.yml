@@ -1,0 +1,44 @@
+pubg:
+  api-key: ${pubgApiKey}
+
+discord:
+  bot:
+    token: ${discordToken}
+  channel:
+    id: ${discordChannelId}
+spring:
+  datasource:
+    url: jdbc:h2:mem:spubg;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+    hikari:
+      maximum-pool-size: 10
+      connection-timeout: 3000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        jdbc:
+          batch_size: 100
+        format_sql: true
+        order_inserts: true
+        order_updates: true
+
+match-processing:
+  auto-startup: false
+
+scheduling:
+  enabled: false
+
+mybatis:
+  mapper-locations: classpath:mapper/**/*.xml
+  type-aliases-package: com.jkky98.spubg.domain
+  configuration:
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl

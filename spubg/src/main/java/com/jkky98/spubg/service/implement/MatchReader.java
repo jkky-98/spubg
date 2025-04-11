@@ -16,20 +16,11 @@ public class MatchReader {
 
     private final MatchRepository matchRepository;
 
-
     public Match read(Long matchId) {
         return matchRepository.findById(matchId).orElseThrow(EntityNotFoundException::new);
     }
 
     public List<Match> readByBoolIsAnalysisFalse() {
         return matchRepository.findByBoolIsAnalysisFalse();
-    }
-
-    public boolean checkIfExistsByMatchApiId(String matchApiId) {
-        return matchRepository.existsByMatchApiId(matchApiId);
-    }
-
-    public long readCountByMatchApiIds(List<String> matchApiIds) {
-        return matchRepository.countByMatchApiIdIn(matchApiIds);
     }
 }

@@ -15,10 +15,6 @@ public class MatchWriter {
 
     private final MatchRepository matchRepository;
 
-    public Match create(Match match) {
-        return matchRepository.save(match);
-    }
-
     public List<Match> createAll(List<Match> matchs) {
         return matchRepository.saveAll(matchs);
     }

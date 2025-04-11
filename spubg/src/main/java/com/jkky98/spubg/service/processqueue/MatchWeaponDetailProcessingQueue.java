@@ -5,6 +5,7 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
 
@@ -22,6 +23,9 @@ public class MatchWeaponDetailProcessingQueue implements SmartLifecycle {
 
     private final AtomicBoolean running = new AtomicBoolean(false);
     private final int workerCount = 5;
+
+    @Value("${match-processing.auto-startup:true}")
+    private boolean autoStartup;
 
     public void addMemberMatch(MemberMatch memberMatch) {
         try {
@@ -62,5 +66,10 @@ public class MatchWeaponDetailProcessingQueue implements SmartLifecycle {
     @Override
     public int getPhase() {
         return 1001;
+    }
+
+    @Override
+    public boolean isAutoStartup() {
+        return autoStartup;
     }
 }
