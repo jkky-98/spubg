@@ -26,6 +26,7 @@ public class MatchProcessingQueue implements SmartLifecycle {
 
     public void addMatch(Match match) {
         try {
+            // toDo : queue.offer(Match, 3(시간), 시간단위(TimeUnit.SECONDS) -> 큐 put 실패에 대한 최대 대기시간 설정 가능 실패시 false -> 예외 처리
             queue.put(match);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

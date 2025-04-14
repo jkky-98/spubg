@@ -24,8 +24,7 @@ public class MatchQueueWorker {
     public void process(BlockingQueue<Match> queue, AtomicBoolean running) {
         while (running.get()) {
             try {
-                // 1초 간격으로 큐 폴링
-                Match match = queue.poll(1, TimeUnit.SECONDS);
+                Match match = queue.poll(1, TimeUnit.MINUTES);
                 if (match != null) {
                     log.debug("[MatchQueueWorker][process] 매치 분석 시작 - matchId : {}", match.getMatchApiId());
                     /**
