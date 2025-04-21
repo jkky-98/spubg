@@ -1,7 +1,5 @@
 package com.jkky98.spubg.discord;
 
-import jakarta.annotation.PostConstruct;
-import lombok.RequiredArgsConstructor;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -15,7 +13,7 @@ public class CommandInvoker {
     private final Map<String, Command> commands;
 
     @Autowired
-    public CommandInvoker(List<Command> commandList) {
+    public CommandInvoker(List<Command> commandList) { // Command 구현체 Spring이 모아서 주입해줌
         this.commands = new HashMap<>();
         for (Command cmd : commandList) {
             this.commands.put(cmd.getCommandName().toLowerCase(), cmd);
