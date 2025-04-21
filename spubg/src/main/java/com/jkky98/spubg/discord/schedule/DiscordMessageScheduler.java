@@ -33,6 +33,7 @@ public class DiscordMessageScheduler {
                     .queue();
         } else {
             log.error("⚠\uFE0F 채널을 찾을 수 없습니다. 채널 ID를 확인하세요: {}", channelId);
+            throw new DiscordConnectionFailureException("채널을 찾을 수 없습니다. 채널 ID를 확인하세요");
         }
     }
 }
