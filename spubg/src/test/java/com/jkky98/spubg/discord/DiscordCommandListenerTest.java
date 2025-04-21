@@ -1,4 +1,4 @@
-package com.jkky98.spubg.pubg;
+package com.jkky98.spubg.discord;
 
 import com.jkky98.spubg.discord.CommandInvoker;
 import com.jkky98.spubg.discord.DiscordCommandListener;

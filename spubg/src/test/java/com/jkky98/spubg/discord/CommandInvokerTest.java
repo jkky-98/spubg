@@ -1,12 +1,10 @@
-package com.jkky98.spubg.pubg;
+package com.jkky98.spubg.discord;
 
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 import java.util.List;
 
-import com.jkky98.spubg.discord.Command;
-import com.jkky98.spubg.discord.CommandInvoker;
 import net.dv8tion.jda.api.entities.channel.unions.MessageChannelUnion;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.requests.restaction.MessageCreateAction;

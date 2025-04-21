@@ -12,7 +12,8 @@ import static com.jkky98.spubg.pubg.ratelimit.TokenBucketConst.MAX_TOKENS;
 public class TokenBucket {
     private final Semaphore tokens = new Semaphore(MAX_TOKENS);
 
-    public synchronized boolean tryConsume() {
+    // TokenManager에서 동시성 제어
+    public boolean tryConsume() {
         return tokens.tryAcquire();
     }
 
@@ -25,7 +26,7 @@ public class TokenBucket {
         }
     }
 
-    public int getAvailableTokens() {
+    public synchronized int getAvailableTokens() {
         return tokens.availablePermits();
     }
 }

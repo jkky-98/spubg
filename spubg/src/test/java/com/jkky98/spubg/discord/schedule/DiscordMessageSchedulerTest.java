@@ -1,4 +1,4 @@
-package com.jkky98.spubg.pubg.schedule;
+package com.jkky98.spubg.discord.schedule;
 
 import static org.mockito.Mockito.*;
 import static org.assertj.core.api.Assertions.*;

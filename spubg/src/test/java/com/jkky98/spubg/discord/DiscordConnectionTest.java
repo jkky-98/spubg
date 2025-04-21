@@ -1,4 +1,4 @@
-package com.jkky98.spubg.pubg;
+package com.jkky98.spubg.discord;
 
 import net.dv8tion.jda.api.JDA;
 import net.dv8tion.jda.api.entities.channel.concrete.TextChannel;
