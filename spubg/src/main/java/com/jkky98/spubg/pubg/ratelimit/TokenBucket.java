@@ -4,29 +4,35 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Semaphore;
-
-import static com.jkky98.spubg.pubg.ratelimit.TokenBucketConst.MAX_TOKENS;
+import java.util.concurrent.TimeUnit;
 
 @Component
 @Slf4j
 public class TokenBucket {
+    private static final int MAX_TOKENS = 10;
     private final Semaphore tokens = new Semaphore(MAX_TOKENS);
 
-    // TokenManager에서 동시성 제어
+    /** 즉시 소비 시도 */
     public boolean tryConsume() {
         return tokens.tryAcquire();
     }
 
-    public synchronized void refill() {
+    /** 지정 시간만큼 토큰이 나올 때까지 대기 후 소비 시도 */
+    public boolean tryConsume(long timeout, TimeUnit unit) throws InterruptedException {
+        return tokens.tryAcquire(1, timeout, unit);
+    }
+
+    /** 토큰 한 개 보충 */
+    public void refill() {
         if (tokens.availablePermits() < MAX_TOKENS) {
             tokens.release();
-            log.debug("[TokenBucket][refill] 🆕 토큰 추가 (현재 토큰 수: {}/{})", tokens.availablePermits(), MAX_TOKENS);
-
-            notify();
+            log.debug("[TokenBucket][refill] 🆕 토큰 추가 (현재 토큰 수: {}/{})",
+                    tokens.availablePermits(), MAX_TOKENS);
         }
     }
 
-    public synchronized int getAvailableTokens() {
+    public int getAvailableTokens() {
         return tokens.availablePermits();
     }
 }
+

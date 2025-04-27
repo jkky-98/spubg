@@ -2,10 +2,18 @@ package com.jkky98.spubg.pubg.ratelimit;
 
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -92,5 +100,21 @@ class TokenManagerTest {
         Throwable ex = error.get();
         assertThat(ex).isInstanceOf(RuntimeException.class)
                 .hasMessageContaining("인터럽트 발생");
+    }
+
+    @DisplayName("[TokenManager][consume] 토큰 부족 시 Timeout 후 TokenUnavailavleException 발생")
+    @Test
+    void consume_timeoutThrowsWithMockito() throws InterruptedException {
+        // 1) 모킹 버킷 준비
+        TokenBucket mockBucket = mock(TokenBucket.class);
+        when(mockBucket.tryConsume(anyLong(), any(TimeUnit.class))).thenReturn(false);
+
+        TokenManager manager = new TokenManager(mockBucket);
+
+        // 2) 예외 분기 검증
+        assertThatThrownBy(manager::consume)
+                .isInstanceOf(TokenUnavailavleException.class)
+                .hasMessageContaining("토큰을")
+                .hasMessageContaining("ms");
     }
 }
